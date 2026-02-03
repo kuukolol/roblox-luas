@@ -76,7 +76,7 @@ do
         if RemoteStorage.currentKeys and RemoteStorage.currentKeys[moduleName] then
             local key = RemoteStorage.currentKeys[moduleName][funcName]
             if key and typeof(key) == "string" then
-                return "{" .. key .. "}"
+                return key
             end
             return key
         end
