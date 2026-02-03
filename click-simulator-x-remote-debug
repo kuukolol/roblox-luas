@@ -1,3 +1,8 @@
+if getgenv().CrosswalkLoaded then
+    print("✅ Crosswalk already loaded (skipping)")
+    return
+end
+
 local Network = {}
 
 do
@@ -69,7 +74,11 @@ do
             end
         end
         if RemoteStorage.currentKeys and RemoteStorage.currentKeys[moduleName] then
-            return RemoteStorage.currentKeys[moduleName][funcName]
+            local key = RemoteStorage.currentKeys[moduleName][funcName]
+            if key and typeof(key) == "string" then
+                return "{" .. key .. "}"
+            end
+            return key
         end
         return nil
     end
@@ -129,6 +138,7 @@ do
 
     getgenv().Network = Network
     getgenv().RemoteStorage = RemoteStorage
+    getgenv().CrosswalkLoaded = true
 
     print("\n✅ Crosswalk decryptor loaded successfully!")
 end
