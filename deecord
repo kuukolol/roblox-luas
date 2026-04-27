@@ -762,7 +762,7 @@ function UI.new()
             local newTag = tagInput.Text ~= "" and tagInput.Text or LP.Name
             -- Update bottom bar
             nameLbl.Text = newName
-            tagLbl.Text = "@" .. newTag .. "  •  OG Tracker"
+            tagLbl.Text = "@" .. newTag
             -- Flash green
             tw(saveBtn, {BackgroundColor3 = C.green}, 0.1)
             task.delay(
