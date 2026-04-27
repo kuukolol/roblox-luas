@@ -273,29 +273,61 @@ function UI.new()
         TextColor3 = C.text,
     })
 
-    -- ── Bottom bar: settings icon + credits ───────────────────────────────────
+    -- ── Bottom bar: avatar + name + gear icon ────────────────────────────────
     local bottomBar = newFrame(sidebar, {
         BackgroundColor3 = Color3.fromRGB(28, 29, 32),
         Position         = UDim2.new(0, 0, 1, -BOTTOM_H),
         Size             = UDim2.new(1, 0, 0, BOTTOM_H),
     })
 
-    -- Settings gear icon (left)
+    -- Player avatar
+    local avatarImg = Instance.new("ImageLabel")
+    avatarImg.Size             = UDim2.new(0, 32, 0, 32)
+    avatarImg.Position         = UDim2.new(0, 8, 0.5, -16)
+    avatarImg.BackgroundColor3 = C.panel
+    avatarImg.BorderSizePixel  = 0
+    avatarImg.Image            = "rbxthumb://type=AvatarHeadShot&id=" .. LP.UserId .. "&w=100&h=100"
+    avatarImg.Parent           = bottomBar
+    corner(avatarImg, 16)
+
+    -- Display name
+    newLabel(bottomBar, {
+        Text       = LP.DisplayName,
+        Size       = UDim2.new(1, -82, 0, 16),
+        Position   = UDim2.new(0, 48, 0, 8),
+        TextSize   = 12,
+        Font       = Enum.Font.GothamBold,
+        TextColor3 = C.text,
+        TextTruncate = Enum.TextTruncate.AtEnd,
+    })
+
+    -- Username + credits line
+    newLabel(bottomBar, {
+        Text       = "@" .. LP.Name .. "  •  OG Tracker",
+        Size       = UDim2.new(1, -82, 0, 14),
+        Position   = UDim2.new(0, 48, 0, 26),
+        TextSize   = 10,
+        Font       = Enum.Font.Gotham,
+        TextColor3 = C.muted,
+        TextTruncate = Enum.TextTruncate.AtEnd,
+    })
+
+    -- Settings gear icon (right side)
     local gearBtn = Instance.new("TextButton")
-    gearBtn.Size               = UDim2.new(0, 28, 0, 28)
-    gearBtn.Position           = UDim2.new(0, 8, 0.5, -14)
+    gearBtn.Size               = UDim2.new(0, 26, 0, 26)
+    gearBtn.Position           = UDim2.new(1, -32, 0.5, -13)
     gearBtn.BackgroundColor3   = C.panel
     gearBtn.BackgroundTransparency = 1
     gearBtn.AutoButtonColor    = false
     gearBtn.Text               = ""
     gearBtn.Parent             = bottomBar
-    corner(gearBtn, 6)
+    corner(gearBtn, 5)
 
     local gearIco = Instance.new("ImageLabel")
-    gearIco.Size               = UDim2.new(0, 20, 0, 20)
-    gearIco.Position           = UDim2.new(0.5, -10, 0.5, -10)
+    gearIco.Size               = UDim2.new(0, 18, 0, 18)
+    gearIco.Position           = UDim2.new(0.5, -9, 0.5, -9)
     gearIco.BackgroundTransparency = 1
-    gearIco.Image              = "rbxassetid://6031280882"  -- settings gear
+    gearIco.Image              = "rbxassetid://6031280882"
     gearIco.ImageColor3        = C.muted
     gearIco.Parent             = gearBtn
 
@@ -307,22 +339,9 @@ function UI.new()
         tween(gearIco, {ImageColor3 = C.muted}, 0.15)
         tween(gearBtn, {BackgroundTransparency = 1}, 0.15)
     end)
-    -- gear click: placeholder for future settings
     gearBtn.MouseButton1Click:Connect(function()
-        -- future settings panel here
+        -- future settings panel
     end)
-
-    -- Credits text (right of gear)
-    newLabel(bottomBar, {
-        Text       = "OG Tracker\nby PleaseLucky",
-        Size       = UDim2.new(1, -46, 1, 0),
-        Position   = UDim2.new(0, 42, 0, 0),
-        TextSize   = 10,
-        Font       = Enum.Font.Gotham,
-        TextColor3 = C.muted,
-        TextWrapped = true,
-        TextYAlignment = Enum.TextYAlignment.Center,
-    })
 
     -- ── Main content area ─────────────────────────────────────────────────────
     local contentArea = newFrame(contentWrap, {
