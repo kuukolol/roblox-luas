@@ -975,10 +975,8 @@ function UI:AddEntry(config)
     local hasVP = config.onViewport ~= nil
     local VP_SIZE = 88
     local TEXT_X = 14
-    local TEXT_W = hasVP and (feed.AbsoluteSize.X - TEXT_X - VP_SIZE - 20) or (feed.AbsoluteSize.X - TEXT_X - 20)
-    if TEXT_W < 60 then
-        TEXT_W = hasVP and 295 or 380
-    end
+    -- Scale-based right padding: responsive to any window width
+    local rightPad = hasVP and (VP_SIZE + 16) or 8
 
     local card = Instance.new("Frame")
     card.Name = "UICard"
@@ -1004,7 +1002,7 @@ function UI:AddEntry(config)
     for i, field in ipairs(fields) do
         local yPos = 10 + (i - 1) * 32
         local fl = Instance.new("TextLabel")
-        fl.Size = UDim2.new(0, TEXT_W, 0, 14)
+        fl.Size = UDim2.new(1, -(TEXT_X + rightPad), 0, 14)
         fl.Position = UDim2.new(0, TEXT_X, 0, yPos)
         fl.BackgroundTransparency = 1
         fl.Font = Enum.Font.GothamBold
@@ -1014,7 +1012,7 @@ function UI:AddEntry(config)
         fl.Text = (field.label or ""):upper()
         fl.Parent = card
         local fv = Instance.new("TextLabel")
-        fv.Size = UDim2.new(0, TEXT_W, 0, 16)
+        fv.Size = UDim2.new(1, -(TEXT_X + rightPad), 0, 16)
         fv.Position = UDim2.new(0, TEXT_X, 0, yPos + 14)
         fv.BackgroundTransparency = 1
         fv.Font = Enum.Font.GothamSemibold
@@ -1028,7 +1026,7 @@ function UI:AddEntry(config)
 
     if config.button then
         local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0, TEXT_W, 0, 22)
+        btn.Size = UDim2.new(1, -(TEXT_X + rightPad), 0, 22)
         btn.Position = UDim2.new(0, TEXT_X, 0, cardH - 30)
         btn.BackgroundColor3 = Color3.fromRGB(60, 63, 70)
         btn.BorderSizePixel = 0
