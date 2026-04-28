@@ -530,8 +530,9 @@ function UI:AddEntry(config)
     end
 
     if config.button then
+        -- Send Trade button
         local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0, 130, 0, 22); btn.Position = UDim2.new(0, TEXT_X, 0, cardH - 30)
+        btn.Size = UDim2.new(0, 120, 0, 22); btn.Position = UDim2.new(0, TEXT_X, 0, cardH - 30)
         btn.BackgroundColor3 = Color3.fromRGB(60, 63, 70); btn.BorderSizePixel = 0
         btn.AutoButtonColor = false; btn.Font = Enum.Font.GothamSemibold; btn.TextSize = 11
         btn.TextColor3 = Color3.fromRGB(220, 221, 222); btn.Text = config.button.text or "Action"
@@ -539,11 +540,25 @@ function UI:AddEntry(config)
         btn.MouseEnter:Connect(function() btn.BackgroundColor3 = Color3.fromRGB(75, 78, 88) end)
         btn.MouseLeave:Connect(function() btn.BackgroundColor3 = Color3.fromRGB(60, 63, 70) end)
         if config.button.onClick then btn.MouseButton1Click:Connect(config.button.onClick) end
+
+        -- Remove button (right of Send Trade)
+        local removeBtn = Instance.new("TextButton")
+        removeBtn.Size = UDim2.new(0, 72, 0, 22)
+        removeBtn.Position = UDim2.new(0, TEXT_X + 124, 0, cardH - 30)
+        removeBtn.BackgroundColor3 = Color3.fromRGB(60, 35, 35); removeBtn.BorderSizePixel = 0
+        removeBtn.AutoButtonColor = false; removeBtn.Font = Enum.Font.GothamSemibold; removeBtn.TextSize = 11
+        removeBtn.TextColor3 = Color3.fromRGB(240, 71, 71); removeBtn.Text = "Remove"
+        removeBtn.Parent = card; corner(removeBtn, 4)
+        removeBtn.MouseEnter:Connect(function() removeBtn.BackgroundColor3 = Color3.fromRGB(80, 40, 40) end)
+        removeBtn.MouseLeave:Connect(function() removeBtn.BackgroundColor3 = Color3.fromRGB(60, 35, 35) end)
+        removeBtn.MouseButton1Click:Connect(function()
+            card:Destroy()
+        end)
     end
 
     if config.onViewport then
         local vp = Instance.new("ViewportFrame")
-        vp.Size = UDim2.new(0, VP_SIZE, 0, VP_SIZE); vp.Position = UDim2.new(1, -(VP_SIZE + 8), 0.5, -(VP_SIZE / 2))
+        vp.Size = UDim2.new(0, VP_SIZE, 0, VP_SIZE); vp.Position = UDim2.new(1, -(VP_SIZE + 24), 0.5, -(VP_SIZE / 2))
         vp.BackgroundColor3 = Color3.fromRGB(20, 21, 24); vp.BorderSizePixel = 0
         vp.LightColor = Color3.fromRGB(230, 235, 255); vp.LightDirection = Vector3.new(-1, -2, -1)
         vp.Ambient = Color3.fromRGB(180, 180, 180); vp.Parent = card; corner(vp, 6)
