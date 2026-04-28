@@ -558,7 +558,7 @@ function UI:AddEntry(config)
 
     if config.onViewport then
         local vp = Instance.new("ViewportFrame")
-        vp.Size = UDim2.new(0, VP_SIZE, 0, VP_SIZE); vp.Position = UDim2.new(1, -(VP_SIZE + 24), 0.5, -(VP_SIZE / 2))
+        vp.Size = UDim2.new(0, VP_SIZE, 0, VP_SIZE); vp.Position = UDim2.new(1, -(VP_SIZE + 48), 0.5, -(VP_SIZE / 2))
         vp.BackgroundColor3 = Color3.fromRGB(20, 21, 24); vp.BorderSizePixel = 0
         vp.LightColor = Color3.fromRGB(230, 235, 255); vp.LightDirection = Vector3.new(-1, -2, -1)
         vp.Ambient = Color3.fromRGB(180, 180, 180); vp.Parent = card; corner(vp, 6)
