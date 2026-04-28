@@ -142,6 +142,98 @@ local function styledInput(parent, props)
     return tb, bg
 end
 
+-- ─── Resizable window ────────────────────────────────────────────────────────
+-- Adds invisible drag handles on edges/corners of win.
+-- AnchorPoint is (0.5, 0) so:
+--   width changes expand BOTH sides equally (center-anchored)
+--   height changes only affect the bottom
+-- Handles: bottom-right corner, bottom-left corner, bottom edge, right edge, left edge
+local function makeResizable(win, minW, minH)
+    minW = minW or 400
+    minH = minH or 260
+
+    -- Each handle: { pos, size, dx, dy }
+    --   dx: +1 = right drag grows width, -1 = left drag grows width, 0 = no width change
+    --   dy: +1 = down drag grows height, 0 = no height change
+    local EDGE = 6 -- px thickness of edge handles
+    local handles = {
+        -- Corners
+        {name = "BR", pos = UDim2.new(1, -EDGE, 1, -EDGE), size = UDim2.new(0, EDGE * 2, 0, EDGE * 2), dx = 1, dy = 1},
+        {name = "BL", pos = UDim2.new(0, -EDGE, 1, -EDGE), size = UDim2.new(0, EDGE * 2, 0, EDGE * 2), dx = -1, dy = 1},
+        -- Edges
+        {name = "B", pos = UDim2.new(0, EDGE, 1, -EDGE), size = UDim2.new(1, -EDGE * 2, 0, EDGE * 2), dx = 0, dy = 1},
+        {name = "R", pos = UDim2.new(1, -EDGE, 0, EDGE), size = UDim2.new(0, EDGE * 2, 1, -EDGE * 2), dx = 1, dy = 0},
+        {name = "L", pos = UDim2.new(0, -EDGE, 0, EDGE), size = UDim2.new(0, EDGE * 2, 1, -EDGE * 2), dx = -1, dy = 0}
+    }
+
+    for _, h in ipairs(handles) do
+        local handle = Instance.new("TextButton")
+        handle.Name = "ResizeHandle_" .. h.name
+        handle.Size = h.size
+        handle.Position = h.pos
+        handle.BackgroundTransparency = 1
+        handle.AutoButtonColor = false
+        handle.Text = ""
+        handle.ZIndex = 50 -- above everything so it always receives input
+        handle.Parent = win
+
+        -- Show a subtle accent dot on corners so user knows it's draggable
+        if h.name == "BR" or h.name == "BL" then
+            local dot = Instance.new("Frame")
+            dot.Size = UDim2.new(0, 6, 0, 6)
+            dot.AnchorPoint = Vector2.new(0.5, 0.5)
+            dot.Position = UDim2.new(0.5, 0, 0.5, 0)
+            dot.BackgroundColor3 = C.divider
+            dot.BorderSizePixel = 0
+            dot.ZIndex = 51
+            dot.Parent = handle
+            corner(dot, 3)
+            handle.MouseEnter:Connect(
+                function()
+                    tw(dot, {BackgroundColor3 = C.accent}, 0.12)
+                end
+            )
+            handle.MouseLeave:Connect(
+                function()
+                    tw(dot, {BackgroundColor3 = C.divider}, 0.12)
+                end
+            )
+        end
+
+        local resizing = false
+        local startMouse = Vector2.new()
+        local startSize = Vector2.new()
+
+        handle.InputBegan:Connect(
+            function(i)
+                if i.UserInputType == Enum.UserInputType.MouseButton1 then
+                    resizing = true
+                    startMouse = Vector2.new(i.Position.X, i.Position.Y)
+                    startSize = Vector2.new(win.Size.X.Offset, win.Size.Y.Offset)
+                    i.Changed:Connect(
+                        function()
+                            if i.UserInputState == Enum.UserInputState.End then
+                                resizing = false
+                            end
+                        end
+                    )
+                end
+            end
+        )
+
+        UIS.InputChanged:Connect(
+            function(i)
+                if resizing and i.UserInputType == Enum.UserInputType.MouseMovement then
+                    local delta = Vector2.new(i.Position.X, i.Position.Y) - startMouse
+                    local newW = h.dx ~= 0 and math.max(minW, startSize.X + delta.X * h.dx) or startSize.X
+                    local newH = h.dy ~= 0 and math.max(minH, startSize.Y + delta.Y * h.dy) or startSize.Y
+                    win.Size = UDim2.new(0, newW, 0, newH)
+                end
+            end
+        )
+    end
+end
+
 -- ═══════════════════════════════════════════════════════════════════════════════
 local UI = {}
 UI.__index = UI
@@ -164,7 +256,6 @@ function UI.new(config)
     local UNAME = config.userName or LP.DisplayName
     local UTAG = config.userTag or ("@" .. LP.Name)
 
-    -- ── ScreenGui ─────────────────────────────────────────────────────────────
     local sg = Instance.new("ScreenGui")
     sg.Name = "UniversalUI_" .. tostring(math.random(1e5, 9e5))
     sg.ResetOnSpawn = false
@@ -172,7 +263,6 @@ function UI.new(config)
     sg.Parent = game:GetService("CoreGui")
     self._sg = sg
 
-    -- ── Window ────────────────────────────────────────────────────────────────
     local win =
         frm(
         sg,
@@ -188,7 +278,9 @@ function UI.new(config)
     corner(win, 8)
     self._win = win
 
-    -- ── Title bar ─────────────────────────────────────────────────────────────
+    -- Attach resize handles
+    makeResizable(win, 480, 260)
+
     local bar = frm(win, {Name = "TitleBar", BackgroundColor3 = C.sidebar, Size = UDim2.new(1, 0, 0, BAR_H)})
 
     local titleIco = Instance.new("ImageLabel")
@@ -269,7 +361,6 @@ function UI.new(config)
     )
     makeDraggable(bar, win)
 
-    -- ── Content wrapper ───────────────────────────────────────────────────────
     local cw =
         frm(
         win,
@@ -286,9 +377,9 @@ function UI.new(config)
             minimised = not minimised
             if minimised then
                 cw.Visible = false
-                tw(win, {Size = UDim2.new(0, WIN_W, 0, BAR_H)}, 0.2)
+                tw(win, {Size = UDim2.new(0, win.Size.X.Offset, 0, BAR_H)}, 0.2)
             else
-                tw(win, {Size = UDim2.new(0, WIN_W, 0, WIN_H)}, 0.2)
+                tw(win, {Size = UDim2.new(0, win.Size.X.Offset, 0, WIN_H)}, 0.2)
                 task.delay(
                     0.21,
                     function()
@@ -299,7 +390,6 @@ function UI.new(config)
         end
     )
 
-    -- ── Sidebar ───────────────────────────────────────────────────────────────
     local sidebar = frm(cw, {Name = "Sidebar", BackgroundColor3 = C.sidebar, Size = UDim2.new(0, SIDE_W, 1, 0)})
 
     local srvHdr = frm(sidebar, {BackgroundColor3 = C.sidebar, Size = UDim2.new(1, 0, 0, 40)})
@@ -335,7 +425,6 @@ function UI.new(config)
     clLayout.Padding = UDim.new(0, 2)
     clLayout.Parent = chanList
 
-    -- ── Bottom bar ────────────────────────────────────────────────────────────
     local bot =
         frm(
         sidebar,
@@ -354,7 +443,6 @@ function UI.new(config)
     avi.Parent = bot
     corner(avi, 16)
 
-    -- botName = DisplayName (top row), botTag = @username (bottom row)
     local botName =
         lbl(
         bot,
@@ -384,7 +472,6 @@ function UI.new(config)
     self._botName = botName
     self._botTag = botTag
 
-    -- forward-declared so channel buttons can close settings
     local sp, settingsOpen, gearIcoRef
     settingsOpen = false
 
@@ -416,7 +503,6 @@ function UI.new(config)
     )
     gearIcoRef = gearIco
 
-    -- ── Content area ──────────────────────────────────────────────────────────
     local ca =
         frm(
         cw,
@@ -452,7 +538,6 @@ function UI.new(config)
         }
     )
 
-    -- ── Channels ──────────────────────────────────────────────────────────────
     local channelData = {}
     local activeChanId = DEF_CH
 
@@ -555,7 +640,6 @@ function UI.new(config)
         fp.PaddingTop = UDim.new(0, 8)
         fp.PaddingBottom = UDim.new(0, 8)
         fp.Parent = feed
-
         channelData[ch.id] = {btn = btn, btnLbl = btnLbl, feed = feed, feedLayout = fl}
         local capId = ch.id
         btn.MouseButton1Click:Connect(
@@ -583,7 +667,6 @@ function UI.new(config)
             ZIndex = 10
         }
     )
-
     local spHdr = frm(sp, {BackgroundColor3 = C.bg, Size = UDim2.new(1, 0, 0, 44), ZIndex = 10})
     divLine(spHdr, 43)
     lbl(
@@ -621,7 +704,6 @@ function UI.new(config)
     spPad.PaddingTop = UDim.new(0, 16)
     spPad.Parent = spBody
 
-    -- PROFILE section
     lbl(
         spBody,
         {
@@ -635,7 +717,6 @@ function UI.new(config)
         }
     )
 
-    -- Preview card — mirrors exactly what the bottom bar shows
     local pc =
         frm(
         spBody,
@@ -656,7 +737,6 @@ function UI.new(config)
     pcAvi.Image = "rbxthumb://type=AvatarHeadShot&id=" .. LP.UserId .. "&w=100&h=100"
     pcAvi.Parent = pc
     corner(pcAvi, 19)
-    -- pcName = DisplayName (top row of preview, same as botName)
     local pcName =
         lbl(
         pc,
@@ -670,7 +750,6 @@ function UI.new(config)
             ZIndex = 11
         }
     )
-    -- pcTag = @username (bottom row of preview, same as botTag)
     local pcTag =
         lbl(
         pc,
@@ -685,7 +764,6 @@ function UI.new(config)
         }
     )
 
-    -- DISPLAY NAME input
     lbl(
         spBody,
         {
@@ -712,12 +790,11 @@ function UI.new(config)
     nameIn:GetPropertyChangedSignal("Text"):Connect(
         function()
             local v = nameIn.Text ~= "" and nameIn.Text:sub(1, 24) or UNAME
-            pcName.Text = v -- preview card top row
-            botName.Text = v -- bottom bar top row
+            pcName.Text = v
+            botName.Text = v
         end
     )
 
-    -- USERNAME input (shows @username in bottom bar)
     lbl(
         spBody,
         {
@@ -744,13 +821,12 @@ function UI.new(config)
     userIn:GetPropertyChangedSignal("Text"):Connect(
         function()
             if userIn.Text ~= "" then
-                pcTag.Text = "@" .. userIn.Text -- preview card bottom row
-                botTag.Text = "@" .. userIn.Text -- bottom bar bottom row
+                pcTag.Text = "@" .. userIn.Text
+                botTag.Text = "@" .. userIn.Text
             end
         end
     )
 
-    -- APPEARANCE section
     lbl(
         spBody,
         {
@@ -763,7 +839,6 @@ function UI.new(config)
             ZIndex = 11
         }
     )
-
     lbl(
         spBody,
         {
@@ -826,7 +901,6 @@ function UI.new(config)
         end
     )
 
-    -- Save button
     local saveBtn = Instance.new("TextButton")
     saveBtn.Size = UDim2.new(1, 0, 0, 36)
     saveBtn.Position = UDim2.new(0, 0, 0, 400)
@@ -856,13 +930,10 @@ function UI.new(config)
             local usr = userIn.Text ~= "" and ("@" .. userIn.Text) or UTAG
             local ttl = titleIn.Text ~= "" and titleIn.Text or TITLE
             local srv = srvIn.Text ~= "" and srvIn.Text or SERVER
-            -- update bottom bar
             botName.Text = nm
             botTag.Text = usr
-            -- update preview card
             pcName.Text = nm
             pcTag.Text = usr
-            -- update window chrome
             titleLbl.Text = ttl
             srvLbl.Text = "  " .. srv
             tw(saveBtn, {BackgroundColor3 = C.green}, 0.1)
@@ -875,7 +946,6 @@ function UI.new(config)
         end
     )
 
-    -- Gear toggle
     gearBtn.MouseButton1Click:Connect(
         function()
             settingsOpen = not settingsOpen
@@ -891,24 +961,6 @@ end
 -- PUBLIC API
 -- ═══════════════════════════════════════════════════════════════════════════════
 
---[[
-UI:AddEntry(config)
-
-config = {
-    channelId   = "feed",
-    accentColor = Color3,
-    cardHeight  = 138,
-    fields = {
-        { label = "USERNAME", value = "PlayerOne" },
-        { label = "BRAINROT", value = "Meowl"     },
-        { label = "MUTATION", value = "Gold", color = Color3.fromRGB(255,222,89) },
-    },
-    button = { text = "Send Trade", onClick = function() end },
-    onViewport = function(vp, wm, cam)
-        -- populate the 3D viewport here
-    end,
-}
---]]
 function UI:AddEntry(config)
     config = config or {}
     local cd = config.channelId and self._channelData[config.channelId] or nil
