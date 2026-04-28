@@ -1,16 +1,9 @@
-local TweenService      = game:GetService("TweenService")
-local RunService        = game:GetService("RunService")
-local UIS               = game:GetService("UserInputService")
-local Players           = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local LP                = Players.LocalPlayer
+local TweenService = game:GetService("TweenService")
+local RunService   = game:GetService("RunService")
+local UIS          = game:GetService("UserInputService")
+local Players      = game:GetService("Players")
+local LP           = Players.LocalPlayer
 
--- ─── Game modules (SAB specific) ─────────────────────────────────────────────
-local Mutations     = require(ReplicatedStorage:WaitForChild("Datas").Mutations)
-local Animals       = require(ReplicatedStorage:WaitForChild("Shared").Animals)
-local AnimalsFolder = ReplicatedStorage:WaitForChild("Models"):WaitForChild("Animals")
-
--- ─── Colors ───────────────────────────────────────────────────────────────────
 local C = {
     bg      = Color3.fromRGB(30,  31,  34),
     sidebar = Color3.fromRGB(35,  36,  40),
@@ -21,10 +14,9 @@ local C = {
     divider = Color3.fromRGB(55,  57,  63),
     green   = Color3.fromRGB(67,  181, 129),
     red     = Color3.fromRGB(240,  71,  71),
-    dark    = Color3.fromRGB(20,   21,  24),
 }
 
--- ─── Helpers ──────────────────────────────────────────────────────────────────
+-- ─── Internal helpers ─────────────────────────────────────────────────────────
 local function tw(obj, props, t)
     TweenService:Create(obj, TweenInfo.new(t or 0.18,
         Enum.EasingStyle.Quad, Enum.EasingDirection.Out), props):Play()
@@ -50,14 +42,13 @@ local function divLine(parent, y)
 end
 local function imgBtn(parent, props)
     local btn = Instance.new("TextButton")
-    btn.Size = props.Size or UDim2.new(0,36,0,36)
-    btn.Position = props.Position or UDim2.new(0,0,0,0)
-    btn.BackgroundTransparency = 1; btn.AutoButtonColor = false; btn.Text = ""; btn.Parent = parent
+    btn.Size=props.Size or UDim2.new(0,36,0,36); btn.Position=props.Position or UDim2.new(0,0,0,0)
+    btn.BackgroundTransparency=1; btn.AutoButtonColor=false; btn.Text=""; btn.Parent=parent
     local ico = Instance.new("ImageLabel")
-    ico.Size = props.IconSize or UDim2.new(0,16,0,16)
-    ico.AnchorPoint = Vector2.new(0.5,0.5); ico.Position = UDim2.new(0.5,0,0.5,0)
-    ico.BackgroundTransparency = 1; ico.Image = props.Image or ""
-    ico.ImageColor3 = props.Color or C.muted; ico.Parent = btn
+    ico.Size=props.IconSize or UDim2.new(0,16,0,16)
+    ico.AnchorPoint=Vector2.new(0.5,0.5); ico.Position=UDim2.new(0.5,0,0.5,0)
+    ico.BackgroundTransparency=1; ico.Image=props.Image or ""; ico.ImageColor3=props.Color or C.muted
+    ico.Parent=btn
     return btn, ico
 end
 local function makeDraggable(handle, target)
@@ -97,44 +88,27 @@ local function styledInput(parent, props)
     return tb, bg
 end
 
--- ─── Mutation color ───────────────────────────────────────────────────────────
-local function mutColor(mutation)
-    if not mutation or mutation == "" then return Color3.fromRGB(130, 130, 130) end
-    local data = Mutations[mutation]
-    if data and data.MainColor then return data.MainColor end
-    return Color3.fromRGB(180, 220, 255)
-end
-
--- ─── Shared model rotation loop ───────────────────────────────────────────────
-local rotatingClones = {}
-RunService.RenderStepped:Connect(function(dt)
-    for i = #rotatingClones, 1, -1 do
-        local e = rotatingClones[i]
-        if not e.clone or not e.clone.Parent then
-            table.remove(rotatingClones, i)
-        else
-            e.angle = (e.angle or 0) + dt * e.speed
-            e.clone:PivotTo(CFrame.new(e.base.Position) * CFrame.Angles(0, math.rad(e.angle), 0))
-        end
-    end
-end)
-
 -- ═══════════════════════════════════════════════════════════════════════════════
 local UI = {}
 UI.__index = UI
 
 --[[
-    config = {
-        title          = "OG Tracker",
-        serverName     = "OG Tracker",
-        iconImage      = "rbxassetid://...",
-        width          = 700,
-        height         = 420,
-        channels       = { {id="feed", label="live-feed"}, ... },
-        defaultChannel = "feed",
-        userName       = LP.DisplayName,
-        userTag        = "@"..LP.Name,
-    }
+UI.new(config)
+
+config = {
+    title          = "My App",
+    serverName     = "My Server",
+    iconImage      = "rbxassetid://...",   -- optional, default gear icon
+    width          = 700,                  -- optional
+    height         = 420,                  -- optional
+    channels       = {
+        { id = "feed", label = "live-feed" },
+        { id = "logs", label = "logs"      },
+    },
+    defaultChannel = "feed",
+    userName       = "PleaseLucky",        -- optional, defaults to LP.DisplayName
+    userTag        = "@PleaseLucky",       -- optional, defaults to @LP.Name
+}
 --]]
 function UI.new(config)
     config = config or {}
@@ -146,17 +120,17 @@ function UI.new(config)
     local SIDE_W = 160
     local BOT_H  = 52
 
-    local TITLE    = config.title      or "App"
-    local SERVER   = config.serverName or TITLE
-    local ICON     = config.iconImage  or "rbxassetid://6031280882"
-    local CHANNELS = config.channels   or {{id="feed", label="live-feed"}}
+    local TITLE    = config.title          or "App"
+    local SERVER   = config.serverName     or TITLE
+    local ICON     = config.iconImage      or "rbxassetid://6031280882"
+    local CHANNELS = config.channels       or {{id="feed", label="live-feed"}}
     local DEF_CH   = config.defaultChannel or CHANNELS[1].id
-    local UNAME    = config.userName   or LP.DisplayName
-    local UTAG     = config.userTag    or ("@"..LP.Name)
+    local UNAME    = config.userName       or LP.DisplayName
+    local UTAG     = config.userTag        or ("@"..LP.Name)
 
     -- ── ScreenGui ─────────────────────────────────────────────────────────────
     local sg = Instance.new("ScreenGui")
-    sg.Name="OGTrackerUI_"..tostring(math.random(1e5,9e5))
+    sg.Name="UniversalUI_"..tostring(math.random(1e5,9e5))
     sg.ResetOnSpawn=false; sg.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
     sg.Parent=game:GetService("CoreGui")
     self._sg = sg
@@ -168,11 +142,9 @@ function UI.new(config)
 
     -- ── Title bar ─────────────────────────────────────────────────────────────
     local bar = frm(win,{Name="TitleBar",BackgroundColor3=C.sidebar,Size=UDim2.new(1,0,0,BAR_H)})
-
     local titleIco = Instance.new("ImageLabel")
     titleIco.Size=UDim2.new(0,20,0,20); titleIco.Position=UDim2.new(0,10,0.5,-10)
     titleIco.BackgroundTransparency=1; titleIco.Image=ICON; titleIco.ImageColor3=C.accent; titleIco.Parent=bar
-
     local titleLbl = lbl(bar,{Text=TITLE,Size=UDim2.new(1,-100,1,0),Position=UDim2.new(0,36,0,0),
         Font=Enum.Font.GothamBold,TextSize=14,TextColor3=C.text})
     self._titleLbl = titleLbl
@@ -195,102 +167,93 @@ function UI.new(config)
     -- ── Content wrapper ───────────────────────────────────────────────────────
     local cw = frm(win,{Name="ContentWrap",BackgroundColor3=C.bg,
         Position=UDim2.new(0,0,0,BAR_H),Size=UDim2.new(1,0,1,-BAR_H)})
-    local minimised = false
+    local minimised=false
     minBtn.MouseButton1Click:Connect(function()
-        minimised = not minimised
-        if minimised then
-            cw.Visible=false; tw(win,{Size=UDim2.new(0,WIN_W,0,BAR_H)},0.2)
-        else
-            tw(win,{Size=UDim2.new(0,WIN_W,0,WIN_H)},0.2)
-            task.delay(0.21,function() cw.Visible=true end)
-        end
+        minimised=not minimised
+        if minimised then cw.Visible=false; tw(win,{Size=UDim2.new(0,WIN_W,0,BAR_H)},0.2)
+        else tw(win,{Size=UDim2.new(0,WIN_W,0,WIN_H)},0.2); task.delay(0.21,function() cw.Visible=true end) end
     end)
 
     -- ── Sidebar ───────────────────────────────────────────────────────────────
-    local sidebar = frm(cw,{Name="Sidebar",BackgroundColor3=C.sidebar,Size=UDim2.new(0,SIDE_W,1,0)})
-
-    local srvHdr = frm(sidebar,{BackgroundColor3=C.sidebar,Size=UDim2.new(1,0,0,40)})
+    local sidebar=frm(cw,{Name="Sidebar",BackgroundColor3=C.sidebar,Size=UDim2.new(0,SIDE_W,1,0)})
+    local srvHdr=frm(sidebar,{BackgroundColor3=C.sidebar,Size=UDim2.new(1,0,0,40)})
     divLine(srvHdr,39)
-    local srvLbl = lbl(srvHdr,{Text="  "..SERVER,Size=UDim2.new(1,0,1,0),
+    local srvLbl=lbl(srvHdr,{Text="  "..SERVER,Size=UDim2.new(1,0,1,0),
         Font=Enum.Font.GothamBold,TextSize=13,TextColor3=C.text})
-    self._srvLbl = srvLbl
+    self._srvLbl=srvLbl
 
-    local chanList = frm(sidebar,{BackgroundColor3=C.sidebar,
+    local chanList=frm(sidebar,{BackgroundColor3=C.sidebar,
         Position=UDim2.new(0,0,0,46),Size=UDim2.new(1,0,1,-(46+BOT_H))})
-    local clPad = Instance.new("UIPadding")
+    local clPad=Instance.new("UIPadding")
     clPad.PaddingLeft=UDim.new(0,6); clPad.PaddingRight=UDim.new(0,6); clPad.PaddingTop=UDim.new(0,4)
     clPad.Parent=chanList
-    local clLayout = Instance.new("UIListLayout"); clLayout.Padding=UDim.new(0,2); clLayout.Parent=chanList
+    local clLayout=Instance.new("UIListLayout"); clLayout.Padding=UDim.new(0,2); clLayout.Parent=chanList
 
     -- ── Bottom bar ────────────────────────────────────────────────────────────
-    local bot = frm(sidebar,{BackgroundColor3=Color3.fromRGB(28,29,32),
+    local bot=frm(sidebar,{BackgroundColor3=Color3.fromRGB(28,29,32),
         Position=UDim2.new(0,0,1,-BOT_H),Size=UDim2.new(1,0,0,BOT_H)})
-    local avi = Instance.new("ImageLabel")
+    local avi=Instance.new("ImageLabel")
     avi.Size=UDim2.new(0,32,0,32); avi.Position=UDim2.new(0,8,0.5,-16)
     avi.BackgroundColor3=C.panel; avi.BorderSizePixel=0
     avi.Image="rbxthumb://type=AvatarHeadShot&id="..LP.UserId.."&w=100&h=100"; avi.Parent=bot
     corner(avi,16)
-    local botName = lbl(bot,{Text=UNAME,Size=UDim2.new(1,-82,0,16),Position=UDim2.new(0,48,0,7),
+    local botName=lbl(bot,{Text=UNAME,Size=UDim2.new(1,-82,0,16),Position=UDim2.new(0,48,0,7),
         TextSize=12,Font=Enum.Font.GothamBold,TextColor3=C.text,TextTruncate=Enum.TextTruncate.AtEnd})
-    local botTag  = lbl(bot,{Text=UTAG,Size=UDim2.new(1,-82,0,14),Position=UDim2.new(0,48,0,27),
+    local botTag=lbl(bot,{Text=UTAG,Size=UDim2.new(1,-82,0,14),Position=UDim2.new(0,48,0,27),
         TextSize=10,Font=Enum.Font.Gotham,TextColor3=C.muted,TextTruncate=Enum.TextTruncate.AtEnd})
     self._botName=botName; self._botTag=botTag
 
-    -- forward-declared so channel buttons can close settings
+    -- forward-declared for channel buttons to close settings
     local sp, settingsOpen, gearIcoRef
-    settingsOpen = false
+    settingsOpen=false
 
-    local gearBtn,gearIco = imgBtn(bot,{Size=UDim2.new(0,26,0,26),Position=UDim2.new(1,-32,0.5,-13),
+    local gearBtn,gearIco=imgBtn(bot,{Size=UDim2.new(0,26,0,26),Position=UDim2.new(1,-32,0.5,-13),
         Image="rbxassetid://6031280882",IconSize=UDim2.new(0,18,0,18),Color=C.muted})
     corner(gearBtn,5); gearBtn.BackgroundColor3=C.panel; gearBtn.BackgroundTransparency=1
     gearBtn.MouseEnter:Connect(function() tw(gearIco,{ImageColor3=C.text},0.15); tw(gearBtn,{BackgroundTransparency=0},0.15) end)
     gearBtn.MouseLeave:Connect(function() tw(gearIco,{ImageColor3=C.muted},0.15); tw(gearBtn,{BackgroundTransparency=1},0.15) end)
-    gearIcoRef = gearIco
+    gearIcoRef=gearIco
 
     -- ── Content area ──────────────────────────────────────────────────────────
-    local ca = frm(cw,{Name="ContentArea",BackgroundColor3=C.bg,
+    local ca=frm(cw,{Name="ContentArea",BackgroundColor3=C.bg,
         Position=UDim2.new(0,SIDE_W,0,0),Size=UDim2.new(1,-SIDE_W,1,0)})
-    local chanHdr = frm(ca,{BackgroundColor3=C.bg,Size=UDim2.new(1,0,0,44)})
+    local chanHdr=frm(ca,{BackgroundColor3=C.bg,Size=UDim2.new(1,0,0,44)})
     divLine(chanHdr,43)
     lbl(chanHdr,{Text="#",Size=UDim2.new(0,20,1,0),Position=UDim2.new(0,14,0,0),TextSize=22,TextColor3=C.muted})
-    local chanHdrTitle = lbl(chanHdr,{Text=DEF_CH,Size=UDim2.new(1,-50,1,0),Position=UDim2.new(0,36,0,0),
+    local chanHdrTitle=lbl(chanHdr,{Text=DEF_CH,Size=UDim2.new(1,-50,1,0),Position=UDim2.new(0,36,0,0),
         TextSize=15,Font=Enum.Font.GothamBold,TextColor3=C.text})
 
-    -- ── Channels ──────────────────────────────────────────────────────────────
-    local channelData  = {}
-    local activeChanId = DEF_CH
+    -- ── Channel builder ───────────────────────────────────────────────────────
+    local channelData={}
+    local activeChanId=DEF_CH
 
     local function switchChannel(id)
-        activeChanId = id
-        -- close settings when switching channel
+        activeChanId=id
         if settingsOpen then
-            settingsOpen = false
-            if sp then sp.Visible = false end
-            tw(gearIcoRef, {ImageColor3=C.muted}, 0.15)
+            settingsOpen=false
+            if sp then sp.Visible=false end
+            tw(gearIcoRef,{ImageColor3=C.muted},0.15)
         end
-        for cid, cd in pairs(channelData) do
-            cd.feed.Visible = (cid == id)
-            if cid == id then
-                cd.btn.BackgroundColor3=C.panel; cd.btn.BackgroundTransparency=0
-                cd.btnLbl.TextColor3=C.text
+        for cid,cd in pairs(channelData) do
+            cd.feed.Visible=(cid==id)
+            if cid==id then
+                cd.btn.BackgroundColor3=C.panel; cd.btn.BackgroundTransparency=0; cd.btnLbl.TextColor3=C.text
             else
-                cd.btn.BackgroundColor3=C.sidebar; cd.btn.BackgroundTransparency=1
-                cd.btnLbl.TextColor3=C.muted
+                cd.btn.BackgroundColor3=C.sidebar; cd.btn.BackgroundTransparency=1; cd.btnLbl.TextColor3=C.muted
             end
         end
-        for _, ch in ipairs(CHANNELS) do
-            if ch.id == id then chanHdrTitle.Text=ch.label; break end
+        for _,ch in ipairs(CHANNELS) do
+            if ch.id==id then chanHdrTitle.Text=ch.label; break end
         end
     end
 
-    for _, ch in ipairs(CHANNELS) do
-        local btn = Instance.new("TextButton")
+    for _,ch in ipairs(CHANNELS) do
+        local btn=Instance.new("TextButton")
         btn.Size=UDim2.new(1,0,0,28); btn.BackgroundColor3=C.sidebar
-        btn.BackgroundTransparency=1; btn.AutoButtonColor=false
-        btn.Font=Enum.Font.Gotham; btn.Text=""; btn.Parent=chanList
-        corner(btn,4)
+        btn.BackgroundTransparency=1; btn.AutoButtonColor=false; btn.Font=Enum.Font.Gotham
+        btn.Text=""; btn.Parent=chanList; corner(btn,4)
         lbl(btn,{Text="#",Size=UDim2.new(0,18,1,0),Position=UDim2.new(0,4,0,0),TextSize=16,TextColor3=C.muted})
-        local btnLbl = lbl(btn,{Text=ch.label,Size=UDim2.new(1,-26,1,0),Position=UDim2.new(0,24,0,0),
+        local btnLbl=lbl(btn,{Text=ch.label,Size=UDim2.new(1,-26,1,0),Position=UDim2.new(0,24,0,0),
             TextSize=13,TextColor3=C.muted})
         btn.MouseEnter:Connect(function()
             if activeChanId~=ch.id then btn.BackgroundTransparency=0.7; btnLbl.TextColor3=C.text end
@@ -298,11 +261,9 @@ function UI.new(config)
         btn.MouseLeave:Connect(function()
             if activeChanId~=ch.id then btn.BackgroundTransparency=1; btnLbl.TextColor3=C.muted end
         end)
-
-        local feed = Instance.new("ScrollingFrame")
-        feed.Name="Feed_"..ch.id; feed.Size=UDim2.new(1,0,1,-44)
-        feed.Position=UDim2.new(0,0,0,44); feed.BackgroundTransparency=1
-        feed.BorderSizePixel=0; feed.ScrollBarThickness=4
+        local feed=Instance.new("ScrollingFrame")
+        feed.Name="Feed_"..ch.id; feed.Size=UDim2.new(1,0,1,-44); feed.Position=UDim2.new(0,0,0,44)
+        feed.BackgroundTransparency=1; feed.BorderSizePixel=0; feed.ScrollBarThickness=4
         feed.ScrollBarImageColor3=C.divider; feed.ScrollBarImageTransparency=0.4
         feed.CanvasSize=UDim2.new(0,0,0,0); feed.AutomaticCanvasSize=Enum.AutomaticSize.Y
         feed.Visible=false; feed.Parent=ca
@@ -310,7 +271,6 @@ function UI.new(config)
         local fp=Instance.new("UIPadding")
         fp.PaddingLeft=UDim.new(0,12); fp.PaddingRight=UDim.new(0,12)
         fp.PaddingTop=UDim.new(0,8); fp.PaddingBottom=UDim.new(0,8); fp.Parent=feed
-
         channelData[ch.id]={btn=btn,btnLbl=btnLbl,feed=feed,feedLayout=fl}
         local capId=ch.id
         btn.MouseButton1Click:Connect(function() switchChannel(capId) end)
@@ -322,36 +282,29 @@ function UI.new(config)
     self._feedLayout=channelData[DEF_CH].feedLayout
 
     -- ── Settings panel ────────────────────────────────────────────────────────
-    sp = frm(cw,{Name="SettingsPanel",BackgroundColor3=C.bg,
+    sp=frm(cw,{Name="SettingsPanel",BackgroundColor3=C.bg,
         Position=UDim2.new(0,SIDE_W,0,0),Size=UDim2.new(1,-SIDE_W,1,0),Visible=false,ZIndex=10})
-
     local spHdr=frm(sp,{BackgroundColor3=C.bg,Size=UDim2.new(1,0,0,44),ZIndex=10})
     divLine(spHdr,43)
     lbl(spHdr,{Text="#",Size=UDim2.new(0,20,1,0),Position=UDim2.new(0,14,0,0),TextSize=22,TextColor3=C.muted,ZIndex=11})
     lbl(spHdr,{Text="settings",Size=UDim2.new(1,-50,1,0),Position=UDim2.new(0,36,0,0),
         TextSize=15,Font=Enum.Font.GothamBold,TextColor3=C.text,ZIndex=11})
-
     local spBody=frm(sp,{BackgroundColor3=C.bg,Position=UDim2.new(0,0,0,44),Size=UDim2.new(1,0,1,-44),ZIndex=10})
     local spPad=Instance.new("UIPadding")
     spPad.PaddingLeft=UDim.new(0,20); spPad.PaddingRight=UDim.new(0,20); spPad.PaddingTop=UDim.new(0,16)
     spPad.Parent=spBody
-
     lbl(spBody,{Text="PROFILE",Size=UDim2.new(1,0,0,16),Position=UDim2.new(0,0,0,0),
         TextSize=10,Font=Enum.Font.GothamBold,TextColor3=C.muted,ZIndex=11})
-
     local pc=frm(spBody,{BackgroundColor3=Color3.fromRGB(28,29,32),Position=UDim2.new(0,0,0,22),
-        Size=UDim2.new(1,0,0,60),ZIndex=10})
-    corner(pc,8)
+        Size=UDim2.new(1,0,0,60),ZIndex=10}); corner(pc,8)
     local pcAvi=Instance.new("ImageLabel")
     pcAvi.Size=UDim2.new(0,38,0,38); pcAvi.Position=UDim2.new(0,10,0.5,-19)
     pcAvi.BackgroundColor3=C.panel; pcAvi.BorderSizePixel=0; pcAvi.ZIndex=11
-    pcAvi.Image="rbxthumb://type=AvatarHeadShot&id="..LP.UserId.."&w=100&h=100"
-    pcAvi.Parent=pc; corner(pcAvi,19)
+    pcAvi.Image="rbxthumb://type=AvatarHeadShot&id="..LP.UserId.."&w=100&h=100"; pcAvi.Parent=pc; corner(pcAvi,19)
     local pcName=lbl(pc,{Text=UNAME,Size=UDim2.new(1,-70,0,18),Position=UDim2.new(0,58,0,10),
         TextSize=13,Font=Enum.Font.GothamBold,TextColor3=C.text,ZIndex=11})
     local pcTag=lbl(pc,{Text=UTAG,Size=UDim2.new(1,-70,0,14),Position=UDim2.new(0,58,0,32),
         TextSize=11,Font=Enum.Font.Gotham,TextColor3=C.muted,ZIndex=11})
-
     lbl(spBody,{Text="DISPLAY NAME",Size=UDim2.new(1,0,0,16),Position=UDim2.new(0,0,0,96),
         TextSize=10,Font=Enum.Font.GothamBold,TextColor3=C.muted,ZIndex=11})
     local nameIn,_=styledInput(spBody,{Size=UDim2.new(1,0,0,36),Position=UDim2.new(0,0,0,116),
@@ -359,12 +312,10 @@ function UI.new(config)
     nameIn:GetPropertyChangedSignal("Text"):Connect(function()
         if nameIn.Text~="" then pcName.Text=nameIn.Text:sub(1,24) end
     end)
-
     lbl(spBody,{Text="TAG",Size=UDim2.new(1,0,0,16),Position=UDim2.new(0,0,0,164),
         TextSize=10,Font=Enum.Font.GothamBold,TextColor3=C.muted,ZIndex=11})
     local tagBg=frm(spBody,{BackgroundColor3=Color3.fromRGB(28,29,32),
-        Position=UDim2.new(0,0,0,184),Size=UDim2.new(1,0,0,36),ZIndex=10})
-    corner(tagBg,5)
+        Position=UDim2.new(0,0,0,184),Size=UDim2.new(1,0,0,36),ZIndex=10}); corner(tagBg,5)
     lbl(tagBg,{Text="#",Size=UDim2.new(0,16,1,0),Position=UDim2.new(0,8,0,0),TextSize=13,TextColor3=C.muted,ZIndex=11})
     local tagIn=Instance.new("TextBox")
     tagIn.Size=UDim2.new(1,-34,1,0); tagIn.Position=UDim2.new(0,24,0,0)
@@ -379,7 +330,6 @@ function UI.new(config)
         if c~=tagIn.Text then tagIn.Text=c end
         if tagIn.Text~="" then pcTag.Text="#"..tagIn.Text end
     end)
-
     lbl(spBody,{Text="APPEARANCE",Size=UDim2.new(1,0,0,16),Position=UDim2.new(0,0,0,234),
         TextSize=10,Font=Enum.Font.GothamBold,TextColor3=C.muted,ZIndex=11})
     lbl(spBody,{Text="WINDOW TITLE",Size=UDim2.new(1,0,0,16),Position=UDim2.new(0,0,0,258),
@@ -389,7 +339,6 @@ function UI.new(config)
     titleIn:GetPropertyChangedSignal("Text"):Connect(function()
         if titleIn.Text~="" then titleLbl.Text=titleIn.Text end
     end)
-
     lbl(spBody,{Text="SERVER NAME",Size=UDim2.new(1,0,0,16),Position=UDim2.new(0,0,0,328),
         TextSize=10,Font=Enum.Font.GothamBold,TextColor3=C.muted,ZIndex=11})
     local srvIn,_=styledInput(spBody,{Size=UDim2.new(1,0,0,36),Position=UDim2.new(0,0,0,348),
@@ -397,7 +346,6 @@ function UI.new(config)
     srvIn:GetPropertyChangedSignal("Text"):Connect(function()
         if srvIn.Text~="" then srvLbl.Text="  "..srvIn.Text end
     end)
-
     local saveBtn=Instance.new("TextButton")
     saveBtn.Size=UDim2.new(1,0,0,36); saveBtn.Position=UDim2.new(0,0,0,400)
     saveBtn.BackgroundColor3=C.accent; saveBtn.BorderSizePixel=0; saveBtn.AutoButtonColor=false
@@ -407,20 +355,17 @@ function UI.new(config)
     saveBtn.MouseEnter:Connect(function() tw(saveBtn,{BackgroundColor3=Color3.fromRGB(71,82,196)},0.15) end)
     saveBtn.MouseLeave:Connect(function() tw(saveBtn,{BackgroundColor3=C.accent},0.15) end)
     saveBtn.MouseButton1Click:Connect(function()
-        local nm  = nameIn.Text~="" and nameIn.Text:sub(1,24) or UNAME
-        local tg  = tagIn.Text~=""  and ("#"..tagIn.Text)     or UTAG
-        local ttl = titleIn.Text~="" and titleIn.Text          or TITLE
-        local srv = srvIn.Text~=""   and srvIn.Text            or SERVER
-        botName.Text=nm; botTag.Text=tg
-        titleLbl.Text=ttl; srvLbl.Text="  "..srv
+        local nm  = nameIn.Text~=""  and nameIn.Text:sub(1,24) or UNAME
+        local tg  = tagIn.Text~=""   and ("#"..tagIn.Text)     or UTAG
+        local ttl = titleIn.Text~="" and titleIn.Text           or TITLE
+        local srv = srvIn.Text~=""   and srvIn.Text             or SERVER
+        botName.Text=nm; botTag.Text=tg; titleLbl.Text=ttl; srvLbl.Text="  "..srv
         pcName.Text=nm; pcTag.Text=tg
         tw(saveBtn,{BackgroundColor3=C.green},0.1)
         task.delay(0.9,function() tw(saveBtn,{BackgroundColor3=C.accent},0.3) end)
     end)
-
     gearBtn.MouseButton1Click:Connect(function()
-        settingsOpen=not settingsOpen
-        sp.Visible=settingsOpen
+        settingsOpen=not settingsOpen; sp.Visible=settingsOpen
         tw(gearIco,{ImageColor3=settingsOpen and C.accent or C.muted},0.15)
     end)
 
@@ -431,114 +376,118 @@ end
 -- PUBLIC API
 -- ═══════════════════════════════════════════════════════════════════════════════
 
--- Build and insert a roll card into the specified channel (default = first channel)
-function UI:AddEntry(playerName, brainrotName, mutation, channelId)
-    local cd = channelId and self._channelData[channelId] or nil
+--[[
+UI:AddEntry(config)
+
+Adds a card to the specified channel feed.
+
+config = {
+    channelId   = "feed",          -- which channel to post in (default = first)
+    accentColor = Color3,          -- left bar colour (default = grey)
+    cardHeight  = 138,             -- optional override
+    fields      = {                -- ordered list of label/value rows
+        { label = "USERNAME", value = "PlayerOne" },
+        { label = "BRAINROT", value = "Meowl"     },
+        { label = "MUTATION",  value = "Gold", color = Color3.fromRGB(255,222,89) },
+    },
+    button = {                     -- optional action button
+        text    = "Send Trade",
+        onClick = function() end,
+    },
+    onViewport = function(vp, wm)  -- optional: called with ViewportFrame + WorldModel
+        -- you build the 3D model here
+    end,
+}
+
+Returns the card Frame so you can modify it later if needed.
+--]]
+function UI:AddEntry(config)
+    config = config or {}
+    local cd = config.channelId and self._channelData[config.channelId] or nil
     local feed = cd and cd.feed or self._feed
     if not feed then return end
 
-    local isBase = (mutation == nil or mutation == "" or mutation == "Base")
-    local mutStr = isBase and "Base" or mutation
-    local clr    = mutColor(isBase and "" or mutation)
+    local accentClr = config.accentColor or C.muted
+    local cardH     = config.cardHeight  or 138
+    local fields    = config.fields      or {}
+    local hasVP     = config.onViewport  ~= nil
+    local VP_SIZE   = 88
+    local TEXT_X    = 14
+    -- if there's a viewport, limit text width so it doesn't overlap
+    local TEXT_W    = hasVP and (feed.AbsoluteSize.X - TEXT_X - VP_SIZE - 20) or (feed.AbsoluteSize.X - TEXT_X - 20)
+    -- fall back if AbsoluteSize isn't ready yet
+    if TEXT_W < 60 then TEXT_W = hasVP and 295 or 380 end
 
-    local CARD_H  = 138
-    local VP_SIZE = 80
-    local TEXT_X  = 14
-    local TEXT_W  = 295
-
-    -- ── Card frame ────────────────────────────────────────────────────────────
+    -- ── Card ──────────────────────────────────────────────────────────────────
     local card = Instance.new("Frame")
-    card.Name             = "EmbedCard"
-    card.Size             = UDim2.new(1, 0, 0, CARD_H)
+    card.Name             = "UICard"
+    card.Size             = UDim2.new(1, 0, 0, cardH)
     card.BackgroundColor3 = Color3.fromRGB(30, 31, 35)
     card.BorderSizePixel  = 0
     card.Parent           = feed
     corner(card, 6)
 
-    -- Left colour accent
+    -- Left accent bar
     local accent = Instance.new("Frame")
-    accent.Size=UDim2.new(0,4,1,0); accent.BackgroundColor3=clr; accent.BorderSizePixel=0; accent.Parent=card
-    corner(accent,4)
-    local accentCover = Instance.new("Frame")
-    accentCover.Size=UDim2.new(0,2,1,0); accentCover.Position=UDim2.new(0,2,0,0)
-    accentCover.BackgroundColor3=clr; accentCover.BorderSizePixel=0; accentCover.Parent=card
+    accent.Size=UDim2.new(0,4,1,0); accent.BackgroundColor3=accentClr
+    accent.BorderSizePixel=0; accent.Parent=card; corner(accent,4)
+    local accentFill = Instance.new("Frame")
+    accentFill.Size=UDim2.new(0,2,1,0); accentFill.Position=UDim2.new(0,2,0,0)
+    accentFill.BackgroundColor3=accentClr; accentFill.BorderSizePixel=0; accentFill.Parent=card
 
-    -- ── Field builder ─────────────────────────────────────────────────────────
-    local function makeField(labelTxt, valueTxt, yPos, valueColor)
+    -- ── Fields ────────────────────────────────────────────────────────────────
+    for i, field in ipairs(fields) do
+        local yPos = 10 + (i-1) * 32
+
         local fieldLbl = Instance.new("TextLabel")
         fieldLbl.Size=UDim2.new(0,TEXT_W,0,14); fieldLbl.Position=UDim2.new(0,TEXT_X,0,yPos)
         fieldLbl.BackgroundTransparency=1; fieldLbl.Font=Enum.Font.GothamBold; fieldLbl.TextSize=10
         fieldLbl.TextColor3=Color3.fromRGB(148,155,164); fieldLbl.TextXAlignment=Enum.TextXAlignment.Left
-        fieldLbl.Text=labelTxt:upper(); fieldLbl.Parent=card
+        fieldLbl.Text=(field.label or ""):upper(); fieldLbl.Parent=card
 
         local fieldVal = Instance.new("TextLabel")
         fieldVal.Size=UDim2.new(0,TEXT_W,0,16); fieldVal.Position=UDim2.new(0,TEXT_X,0,yPos+14)
         fieldVal.BackgroundTransparency=1; fieldVal.Font=Enum.Font.GothamSemibold; fieldVal.TextSize=13
-        fieldVal.TextColor3=valueColor or Color3.fromRGB(220,221,222)
+        fieldVal.TextColor3=field.color or Color3.fromRGB(220,221,222)
         fieldVal.TextXAlignment=Enum.TextXAlignment.Left; fieldVal.TextTruncate=Enum.TextTruncate.AtEnd
-        fieldVal.Text=valueTxt; fieldVal.Parent=card
-        return fieldVal
+        fieldVal.Text=tostring(field.value or ""); fieldVal.Parent=card
     end
 
-    makeField("Username", playerName,   10)
-    makeField("Brainrot", brainrotName, 42)
-    makeField("Mutation",  mutStr,       74, clr)
-
-    -- ── Send Trade button ─────────────────────────────────────────────────────
-    local tradeBtn = Instance.new("TextButton")
-    tradeBtn.Size=UDim2.new(0,TEXT_W,0,24); tradeBtn.Position=UDim2.new(0,TEXT_X,0,108)
-    tradeBtn.BackgroundColor3=Color3.fromRGB(60,63,70); tradeBtn.BorderSizePixel=0
-    tradeBtn.AutoButtonColor=false; tradeBtn.Font=Enum.Font.GothamSemibold; tradeBtn.TextSize=11
-    tradeBtn.TextColor3=Color3.fromRGB(220,221,222); tradeBtn.Text="Send Trade"; tradeBtn.Parent=card
-    corner(tradeBtn,4)
-    tradeBtn.MouseEnter:Connect(function() tradeBtn.BackgroundColor3=Color3.fromRGB(75,78,88) end)
-    tradeBtn.MouseLeave:Connect(function() tradeBtn.BackgroundColor3=Color3.fromRGB(60,63,70) end)
-
-    -- ── ViewportFrame ─────────────────────────────────────────────────────────
-    local vp = Instance.new("ViewportFrame")
-    vp.Size=UDim2.new(0,VP_SIZE,0,VP_SIZE); vp.Position=UDim2.new(1,-(VP_SIZE+8),0.5,-(VP_SIZE/2))
-    vp.BackgroundColor3=Color3.fromRGB(20,21,24); vp.BorderSizePixel=0
-    vp.LightColor=Color3.fromRGB(230,235,255); vp.LightDirection=Vector3.new(-1,-2,-1)
-    vp.Ambient=Color3.fromRGB(180,180,180); vp.Parent=card
-    corner(vp,6)
-
-    local cam=Instance.new("Camera"); cam.FieldOfView=28; cam.Parent=vp; vp.CurrentCamera=cam
-    local wm=Instance.new("WorldModel"); wm.Parent=vp
-
-    local source = AnimalsFolder:FindFirstChild(brainrotName)
-    if source then
-        local clone = source:Clone()
-        for _,s in clone:GetDescendants() do
-            if s:IsA("BaseScript") or s:IsA("ModuleScript") then s:Destroy() end
+    -- ── Optional button ───────────────────────────────────────────────────────
+    if config.button then
+        local btnY = cardH - 30
+        local btn  = Instance.new("TextButton")
+        btn.Size=UDim2.new(0,TEXT_W,0,22); btn.Position=UDim2.new(0,TEXT_X,0,btnY)
+        btn.BackgroundColor3=Color3.fromRGB(60,63,70); btn.BorderSizePixel=0
+        btn.AutoButtonColor=false; btn.Font=Enum.Font.GothamSemibold; btn.TextSize=11
+        btn.TextColor3=Color3.fromRGB(220,221,222); btn.Text=config.button.text or "Action"
+        btn.Parent=card; corner(btn,4)
+        btn.MouseEnter:Connect(function() btn.BackgroundColor3=Color3.fromRGB(75,78,88) end)
+        btn.MouseLeave:Connect(function() btn.BackgroundColor3=Color3.fromRGB(60,63,70) end)
+        if config.button.onClick then
+            btn.MouseButton1Click:Connect(config.button.onClick)
         end
-        for _,p in clone:GetDescendants() do
-            if p:IsA("BasePart") then
-                p.Anchored=true; p.CanCollide=false; p.CanQuery=false; p.CanTouch=false; p.Massless=true
-            end
-        end
-        clone.Parent = wm
-        if not isBase then
-            pcall(function() Animals:ApplyMutation(clone, brainrotName, mutation, true) end)
-        end
-        if not clone.PrimaryPart then
-            for _,p in clone:GetDescendants() do if p:IsA("BasePart") then clone.PrimaryPart=p; break end end
-        end
-        local cf,size = clone:GetBoundingBox()
-        local dist = (math.max(size.X,size.Y,size.Z)/2) / math.tan(math.rad(cam.FieldOfView/2)) * 1.1
-        cam.CFrame = CFrame.new(cf.Position+Vector3.new(0,size.Y*0.1,dist), cf.Position)
-        table.insert(rotatingClones,{clone=clone, base=clone:GetPivot(), speed=50, angle=0})
-    else
-        local q=Instance.new("TextLabel"); q.Size=UDim2.new(1,0,1,0)
-        q.BackgroundTransparency=1; q.Font=Enum.Font.GothamBold; q.TextSize=22
-        q.TextColor3=Color3.fromRGB(80,80,80); q.Text="?"
-        q.TextXAlignment=Enum.TextXAlignment.Center; q.TextYAlignment=Enum.TextYAlignment.Center
-        q.Parent=vp
+    end
+
+    -- ── Optional ViewportFrame ────────────────────────────────────────────────
+    if config.onViewport then
+        local vp = Instance.new("ViewportFrame")
+        vp.Size=UDim2.new(0,VP_SIZE,0,VP_SIZE)
+        vp.Position=UDim2.new(1,-(VP_SIZE+8),0.5,-(VP_SIZE/2))
+        vp.BackgroundColor3=Color3.fromRGB(20,21,24); vp.BorderSizePixel=0
+        vp.LightColor=Color3.fromRGB(230,235,255); vp.LightDirection=Vector3.new(-1,-2,-1)
+        vp.Ambient=Color3.fromRGB(180,180,180); vp.Parent=card; corner(vp,6)
+        local cam=Instance.new("Camera"); cam.FieldOfView=28; cam.Parent=vp; vp.CurrentCamera=cam
+        local wm=Instance.new("WorldModel"); wm.Parent=vp
+        -- caller populates the model, fits camera, etc.
+        config.onViewport(vp, wm, cam)
     end
 
     feed.CanvasPosition = Vector2.new(0, math.huge)
+    return card
 end
 
--- Get feed for a channel
+-- Get a channel's feed frame directly
 function UI:GetFeed(channelId)
     if channelId and self._channelData[channelId] then
         return self._channelData[channelId].feed
@@ -546,14 +495,14 @@ function UI:GetFeed(channelId)
     return self._feed
 end
 
--- Update "Xs ago" timestamps on all channel feeds
+-- Update "Xs ago" timestamps (call from Heartbeat)
 function UI:UpdateTimestamps()
     for _, cd in pairs(self._channelData) do
         for _, row in cd.feed:GetChildren() do
             if row:IsA("Frame") then
                 local sa = row:GetAttribute("SpawnedAt")
                 if sa then
-                    local e = math.floor(os.clock()-sa)
+                    local e=math.floor(os.clock()-sa)
                     local t
                     if e<60 then t=e.."s ago"
                     elseif e<3600 then
