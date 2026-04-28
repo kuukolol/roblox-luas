@@ -1,128 +1,123 @@
--- new discord UI mainly for SAB
-
 local TweenService = game:GetService("TweenService")
-local RunService = game:GetService("RunService")
-local UIS = game:GetService("UserInputService")
-local Players = game:GetService("Players")
-local LP = Players.LocalPlayer
+local UIS          = game:GetService("UserInputService")
+local Players      = game:GetService("Players")
+local LP           = Players.LocalPlayer
 
 local C = {
-    bg = Color3.fromRGB(30, 31, 34),
-    sidebar = Color3.fromRGB(35, 36, 40),
-    panel = Color3.fromRGB(43, 45, 49),
-    accent = Color3.fromRGB(88, 101, 242),
-    text = Color3.fromRGB(220, 221, 222),
-    muted = Color3.fromRGB(148, 155, 164),
-    divider = Color3.fromRGB(55, 57, 63),
-    gold = Color3.fromRGB(255, 185, 40),
-    green = Color3.fromRGB(67, 181, 129),
-    red = Color3.fromRGB(240, 71, 71),
-    dark = Color3.fromRGB(20, 21, 24),
-    rowHover = Color3.fromRGB(58, 60, 66)
+    bg      = Color3.fromRGB(30,  31,  34),
+    sidebar = Color3.fromRGB(35,  36,  40),
+    panel   = Color3.fromRGB(43,  45,  49),
+    accent  = Color3.fromRGB(88,  101, 242),
+    text    = Color3.fromRGB(220, 221, 222),
+    muted   = Color3.fromRGB(148, 155, 164),
+    divider = Color3.fromRGB(55,  57,  63),
+    green   = Color3.fromRGB(67,  181, 129),
+    red     = Color3.fromRGB(240,  71,  71),
+    dark    = Color3.fromRGB(20,   21,  24),
 }
 
+-- ─── Helpers ──────────────────────────────────────────────────────────────────
 local function tw(obj, props, t)
-    TweenService:Create(obj, TweenInfo.new(t or 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), props):Play()
+    TweenService:Create(obj, TweenInfo.new(t or 0.18,
+        Enum.EasingStyle.Quad, Enum.EasingDirection.Out), props):Play()
 end
+
 local function corner(p, r)
     local c = Instance.new("UICorner")
     c.CornerRadius = UDim.new(0, r or 6)
     c.Parent = p
 end
-local function lbl(parent, props)
+
+local function label(parent, props)
     local l = Instance.new("TextLabel")
     l.BackgroundTransparency = 1
-    l.Font = Enum.Font.GothamSemibold
-    l.TextSize = 13
-    l.TextColor3 = C.text
-    l.TextXAlignment = Enum.TextXAlignment.Left
-    for k, v in pairs(props or {}) do
-        l[k] = v
-    end
+    l.Font                   = Enum.Font.GothamSemibold
+    l.TextSize               = 13
+    l.TextColor3             = C.text
+    l.TextXAlignment         = Enum.TextXAlignment.Left
+    for k, v in pairs(props or {}) do l[k] = v end
     l.Parent = parent
     return l
 end
-local function frm(parent, props)
+
+local function frame(parent, props)
     local f = Instance.new("Frame")
     f.BackgroundColor3 = C.panel
-    f.BorderSizePixel = 0
-    for k, v in pairs(props or {}) do
-        f[k] = v
-    end
+    f.BorderSizePixel  = 0
+    for k, v in pairs(props or {}) do f[k] = v end
     f.Parent = parent
     return f
 end
-local function divLine(parent, y)
-    return frm(
-        parent,
-        {BackgroundColor3 = C.divider, Size = UDim2.new(1, -16, 0, 1), Position = UDim2.new(0, 8, 0, y or 0)}
-    )
-end
-local function makeDraggable(handle, target)
-    local drag, ds, sp
-    handle.InputBegan:Connect(
-        function(i)
-            if i.UserInputType == Enum.UserInputType.MouseButton1 then
-                drag = true
-                ds = i.Position
-                sp = target.Position
-                i.Changed:Connect(
-                    function()
-                        if i.UserInputState == Enum.UserInputState.End then
-                            drag = false
-                        end
-                    end
-                )
-            end
-        end
-    )
-    UIS.InputChanged:Connect(
-        function(i)
-            if drag and i.UserInputType == Enum.UserInputType.MouseMovement then
-                local d = i.Position - ds
-                target.Position = UDim2.new(sp.X.Scale, sp.X.Offset + d.X, sp.Y.Scale, sp.Y.Offset + d.Y)
-            end
-        end
-    )
+
+local function divider(parent, yOffset)
+    return frame(parent, {
+        BackgroundColor3 = C.divider,
+        Size             = UDim2.new(1, -16, 0, 1),
+        Position         = UDim2.new(0, 8, 0, yOffset or 0),
+    })
 end
 
-local function inputBox(parent, props)
-    local bg =
-        frm(
-        parent,
-        {
-            BackgroundColor3 = Color3.fromRGB(28, 29, 32),
-            Size = props.Size or UDim2.new(1, 0, 0, 38),
-            Position = props.Position or UDim2.new(0, 0, 0, 0),
-            ZIndex = 10
-        }
-    )
+local function imgBtn(parent, props)
+    local btn = Instance.new("TextButton")
+    btn.Size               = props.Size or UDim2.new(0, 36, 0, 36)
+    btn.Position           = props.Position or UDim2.new(0, 0, 0, 0)
+    btn.BackgroundTransparency = 1
+    btn.AutoButtonColor    = false
+    btn.Text               = ""
+    btn.Parent             = parent
+    local ico = Instance.new("ImageLabel")
+    ico.Size               = props.IconSize or UDim2.new(0, 16, 0, 16)
+    ico.AnchorPoint        = Vector2.new(0.5, 0.5)
+    ico.Position           = UDim2.new(0.5, 0, 0.5, 0)
+    ico.BackgroundTransparency = 1
+    ico.Image              = props.Image or ""
+    ico.ImageColor3        = props.Color or C.muted
+    ico.Parent             = btn
+    return btn, ico
+end
+
+local function makeDraggable(handle, target)
+    local drag, ds, sp
+    handle.InputBegan:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1 then
+            drag = true; ds = i.Position; sp = target.Position
+            i.Changed:Connect(function()
+                if i.UserInputState == Enum.UserInputState.End then drag = false end
+            end)
+        end
+    end)
+    UIS.InputChanged:Connect(function(i)
+        if drag and i.UserInputType == Enum.UserInputType.MouseMovement then
+            local d = i.Position - ds
+            target.Position = UDim2.new(sp.X.Scale, sp.X.Offset+d.X, sp.Y.Scale, sp.Y.Offset+d.Y)
+        end
+    end)
+end
+
+local function styledInput(parent, props)
+    local bg = frame(parent, {
+        BackgroundColor3 = Color3.fromRGB(28, 29, 32),
+        Size             = props.Size or UDim2.new(1, 0, 0, 38),
+        Position         = props.Position or UDim2.new(0, 0, 0, 0),
+        ZIndex           = props.ZIndex or 5,
+    })
     corner(bg, 5)
     local tb = Instance.new("TextBox")
-    tb.Size = UDim2.new(1, -16, 1, 0)
-    tb.Position = UDim2.new(0, 8, 0, 0)
+    tb.Size              = UDim2.new(1, -16, 1, 0)
+    tb.Position          = UDim2.new(0, 8, 0, 0)
     tb.BackgroundTransparency = 1
-    tb.Font = Enum.Font.Gotham
-    tb.TextSize = 13
-    tb.TextColor3 = C.text
+    tb.Font              = Enum.Font.Gotham
+    tb.TextSize          = 13
+    tb.TextColor3        = C.text
     tb.PlaceholderColor3 = C.muted
-    tb.PlaceholderText = props.Placeholder or ""
-    tb.Text = props.Default or ""
-    tb.TextXAlignment = Enum.TextXAlignment.Left
-    tb.ClearTextOnFocus = false
-    tb.ZIndex = 11
-    tb.Parent = bg
-    -- Highlight border on focus
-    tb.Focused:Connect(
-        function()
-            tw(bg, {BackgroundColor3 = Color3.fromRGB(50, 52, 80)}, 0.15)
-        end
-    )
-    tb.FocusLost:Connect(
-        function()
-            tw(bg, {BackgroundColor3 = Color3.fromRGB(28, 29, 32)}, 0.15)
-        end
-    )
+    tb.PlaceholderText   = props.Placeholder or ""
+    tb.Text              = props.Default or ""
+    tb.TextXAlignment    = Enum.TextXAlignment.Left
+    tb.ClearTextOnFocus  = false
+    tb.ZIndex            = (props.ZIndex or 5) + 1
+    tb.Parent            = bg
+    tb.Focused:Connect(function() tw(bg, {BackgroundColor3=Color3.fromRGB(50,52,80)}, 0.15) end)
+    tb.FocusLost:Connect(function() tw(bg, {BackgroundColor3=Color3.fromRGB(28,29,32)}, 0.15) end)
     return tb, bg
 end
 
@@ -130,688 +125,514 @@ end
 local UI = {}
 UI.__index = UI
 
-function UI.new()
+--[[
+    config = {
+        title      = "My App",          -- window title bar text
+        serverName = "My Server",       -- sidebar server name
+        iconImage  = "rbxassetid://...",-- optional icon next to title
+        width      = 700,               -- optional
+        height     = 420,               -- optional
+        channels   = {                  -- list of channels (in order)
+            { id = "feed",     label = "live-feed" },
+            { id = "logs",     label = "logs"      },
+        },
+        defaultChannel = "feed",        -- which channel is active on open
+        userName   = LP.DisplayName,    -- bottom bar display name
+        userTag    = "@" .. LP.Name,    -- bottom bar tag
+    }
+--]]
+function UI.new(config)
+    config = config or {}
     local self = setmetatable({}, UI)
 
+    local WIN_W    = config.width      or 700
+    local WIN_H    = config.height     or 420
+    local BAR_H    = 36
+    local SIDE_W   = 160
+    local BOT_H    = 52
+
+    local TITLE      = config.title      or "App"
+    local SERVER     = config.serverName or TITLE
+    local ICON       = config.iconImage  or "rbxassetid://6031280882"
+    local CHANNELS   = config.channels   or { {id="feed", label="live-feed"} }
+    local DEFAULT_CH = config.defaultChannel or CHANNELS[1].id
+    local UNAME      = config.userName   or LP.DisplayName
+    local UTAG       = config.userTag    or ("@" .. LP.Name)
+
+    -- ── Root ScreenGui ─────────────────────────────────────────────────────
     local sg = Instance.new("ScreenGui")
-    sg.Name = "OGTrackerGUI_" .. tostring(math.random(100000, 999999))
-    sg.ResetOnSpawn = false
+    sg.Name           = "DiscordUI_" .. tostring(math.random(1e5, 9e5))
+    sg.ResetOnSpawn   = false
     sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    sg.Parent = game:GetService("CoreGui")
+    sg.Parent         = game:GetService("CoreGui")
     self._sg = sg
 
-    local WIN_W, WIN_H, BAR_H = 700, 420, 36
-    local SIDEBAR_W, BOTTOM_H = 160, 52
-
-    -- ── Main window ───────────────────────────────────────────────────────────
-    local win =
-        frm(
-        sg,
-        {
-            Name = "Window",
-            BackgroundColor3 = C.bg,
-            AnchorPoint = Vector2.new(0.5, 0),
-            Position = UDim2.new(0.5, 0, 0, 60),
-            Size = UDim2.new(0, WIN_W, 0, WIN_H),
-            ClipsDescendants = true
-        }
-    )
+    -- ── Window ─────────────────────────────────────────────────────────────
+    local win = frame(sg, {
+        Name             = "Window",
+        BackgroundColor3 = C.bg,
+        AnchorPoint      = Vector2.new(0.5, 0),
+        Position         = UDim2.new(0.5, 0, 0, 60),
+        Size             = UDim2.new(0, WIN_W, 0, WIN_H),
+        ClipsDescendants = true,
+    })
     corner(win, 8)
     self._win = win
 
-    -- ── Title bar ─────────────────────────────────────────────────────────────
-    local bar = frm(win, {Name = "TitleBar", BackgroundColor3 = C.sidebar, Size = UDim2.new(1, 0, 0, BAR_H)})
-    do
-        local ico = Instance.new("ImageLabel")
-        ico.Size = UDim2.new(0, 20, 0, 20)
-        ico.Position = UDim2.new(0, 10, 0.5, -10)
-        ico.BackgroundTransparency = 1
-        ico.Image = "rbxassetid://6031280882"
-        ico.ImageColor3 = C.accent
-        ico.Parent = bar
-        lbl(
-            bar,
-            {
-                Text = "OG Tracker",
-                Size = UDim2.new(1, -100, 1, 0),
-                Position = UDim2.new(0, 36, 0, 0),
-                Font = Enum.Font.GothamBold,
-                TextSize = 14,
-                TextColor3 = C.text
-            }
-        )
-        -- Close
-        local cb = Instance.new("TextButton")
-        cb.Size = UDim2.new(0, 36, 0, BAR_H)
-        cb.Position = UDim2.new(1, -36, 0, 0)
-        cb.BackgroundTransparency = 1
-        cb.Font = Enum.Font.GothamBold
-        cb.Text = ""
-        local closeIco = Instance.new("ImageLabel")
-        closeIco.Size = UDim2.new(0, 16, 0, 16)
-        closeIco.Position = UDim2.new(0.5, -8, 0.5, -8)
-        closeIco.BackgroundTransparency = 1
-        closeIco.Image = "rbxassetid://6035047409"  -- same X icon DiscordLib uses
-        closeIco.ImageColor3 = C.muted
-        closeIco.Parent = cb
-        cb.MouseEnter:Connect(function() closeIco.ImageColor3 = C.red end)
-        cb.MouseLeave:Connect(function() closeIco.ImageColor3 = C.muted end)
-        cb.TextColor3 = C.muted
-        cb.TextSize = 14
-        cb.AutoButtonColor = false
-        cb.Parent = bar
-        cb.MouseEnter:Connect(
-            function()
-                cb.TextColor3 = C.red
-            end
-        )
-        cb.MouseLeave:Connect(
-            function()
-                cb.TextColor3 = C.muted
-            end
-        )
-        cb.MouseButton1Click:Connect(
-            function()
-                tw(win, {Size = UDim2.new(0, WIN_W, 0, 0)}, 0.22)
-                task.delay(
-                    0.25,
-                    function()
-                        sg:Destroy()
-                    end
-                )
-            end
-        )
-        -- Minimise
-        local mb = Instance.new("TextButton")
-        mb.Size = UDim2.new(0, 36, 0, BAR_H)
-        mb.Position = UDim2.new(1, -72, 0, 0)
-        mb.BackgroundTransparency = 1
-        mb.Font = Enum.Font.GothamBold
-        mb.Text = ""
-        local minIco = Instance.new("ImageLabel")
-        minIco.Size = UDim2.new(0, 16, 0, 16)
-        minIco.Position = UDim2.new(0.5, -8, 0.5, -8)
-        minIco.BackgroundTransparency = 1
-        minIco.Image = "rbxassetid://6035067836"  -- same minimize icon DiscordLib uses
-        minIco.ImageColor3 = C.muted
-        minIco.Parent = mb
-        mb.MouseEnter:Connect(function() minIco.ImageColor3 = C.text end)
-        mb.MouseLeave:Connect(function() minIco.ImageColor3 = C.muted end)
-        mb.TextColor3 = C.muted
-        mb.TextSize = 14
-        mb.AutoButtonColor = false
-        mb.Parent = bar
-        mb.MouseEnter:Connect(
-            function()
-                mb.TextColor3 = C.text
-            end
-        )
-        mb.MouseLeave:Connect(
-            function()
-                mb.TextColor3 = C.muted
-            end
-        )
-        local minimised = false
-        mb.MouseButton1Click:Connect(
-            function()
-                minimised = not minimised
-                if minimised then
-                    contentWrap_ref.Visible = false -- assigned below
-                    tw(win, {Size = UDim2.new(0, WIN_W, 0, BAR_H)}, 0.2)
-                else
-                    tw(win, {Size = UDim2.new(0, WIN_W, 0, WIN_H)}, 0.2)
-                    task.delay(
-                        0.21,
-                        function()
-                            contentWrap_ref.Visible = true
-                        end
-                    )
-                end
-            end
-        )
-        self._minBtn = mb
-        makeDraggable(bar, win)
-    end
+    -- ── Title bar ──────────────────────────────────────────────────────────
+    local bar = frame(win, {
+        Name             = "TitleBar",
+        BackgroundColor3 = C.sidebar,
+        Size             = UDim2.new(1, 0, 0, BAR_H),
+    })
 
-    -- ── Content wrapper ───────────────────────────────────────────────────────
-    local contentWrap =
-        frm(
-        win,
-        {
-            Name = "ContentWrapper",
-            BackgroundColor3 = C.bg,
-            Position = UDim2.new(0, 0, 0, BAR_H),
-            Size = UDim2.new(1, 0, 1, -BAR_H)
-        }
-    )
-    contentWrap_ref = contentWrap -- upvalue for minimise closure
-    -- fix the closure reference properly:
-    do
-        local mb = self._minBtn
-        local minimised = false
-        mb.MouseButton1Click:Connect(
-            function()
-                minimised = not minimised
-                if minimised then
-                    contentWrap.Visible = false
-                    tw(win, {Size = UDim2.new(0, WIN_W, 0, BAR_H)}, 0.2)
-                else
-                    tw(win, {Size = UDim2.new(0, WIN_W, 0, WIN_H)}, 0.2)
-                    task.delay(
-                        0.21,
-                        function()
-                            contentWrap.Visible = true
-                        end
-                    )
-                end
-            end
-        )
-    end
+    local titleIco = Instance.new("ImageLabel")
+    titleIco.Size               = UDim2.new(0, 20, 0, 20)
+    titleIco.Position           = UDim2.new(0, 10, 0.5, -10)
+    titleIco.BackgroundTransparency = 1
+    titleIco.Image              = ICON
+    titleIco.ImageColor3        = C.accent
+    titleIco.Parent             = bar
+    self._titleIco = titleIco
 
-    -- ── Left sidebar ──────────────────────────────────────────────────────────
-    local sidebar =
-        frm(
-        contentWrap,
-        {
-            Name = "Sidebar",
-            BackgroundColor3 = C.sidebar,
-            Size = UDim2.new(0, SIDEBAR_W, 1, 0)
-        }
-    )
+    local titleLbl = label(bar, {
+        Text       = TITLE,
+        Size       = UDim2.new(1, -100, 1, 0),
+        Position   = UDim2.new(0, 36, 0, 0),
+        Font       = Enum.Font.GothamBold,
+        TextSize   = 14,
+        TextColor3 = C.text,
+    })
+    self._titleLbl = titleLbl
 
-    -- Server header
-    local sh = frm(sidebar, {BackgroundColor3 = C.sidebar, Size = UDim2.new(1, 0, 0, 40)})
-    divLine(sh, 39)
-    lbl(
-        sh,
-        {
-            Text = "  OG Tracker",
-            Size = UDim2.new(1, 0, 1, 0),
-            Font = Enum.Font.GothamBold,
-            TextSize = 13,
-            TextColor3 = C.text
-        }
-    )
+    -- Close button
+    local closeBtn, closeIco = imgBtn(bar, {
+        Size     = UDim2.new(0, 36, 0, BAR_H),
+        Position = UDim2.new(1, -36, 0, 0),
+        Image    = "rbxassetid://6035047409",
+        IconSize = UDim2.new(0, 16, 0, 16),
+        Color    = C.muted,
+    })
+    closeBtn.MouseEnter:Connect(function() tw(closeIco, {ImageColor3=C.red}, 0.12) end)
+    closeBtn.MouseLeave:Connect(function() tw(closeIco, {ImageColor3=C.muted}, 0.12) end)
+    closeBtn.MouseButton1Click:Connect(function()
+        tw(win, {Size=UDim2.new(0,WIN_W,0,0)}, 0.22)
+        task.delay(0.25, function() sg:Destroy() end)
+    end)
+
+    -- Minimize button
+    local minBtn, minIco = imgBtn(bar, {
+        Size     = UDim2.new(0, 36, 0, BAR_H),
+        Position = UDim2.new(1, -72, 0, 0),
+        Image    = "rbxassetid://6035067836",
+        IconSize = UDim2.new(0, 16, 0, 16),
+        Color    = C.muted,
+    })
+    minBtn.MouseEnter:Connect(function() tw(minIco, {ImageColor3=C.text}, 0.12) end)
+    minBtn.MouseLeave:Connect(function() tw(minIco, {ImageColor3=C.muted}, 0.12) end)
+
+    makeDraggable(bar, win)
+
+    -- ── Content wrapper (hidden on minimize) ───────────────────────────────
+    local cw = frame(win, {
+        Name             = "ContentWrap",
+        BackgroundColor3 = C.bg,
+        Position         = UDim2.new(0, 0, 0, BAR_H),
+        Size             = UDim2.new(1, 0, 1, -BAR_H),
+    })
+
+    local minimised = false
+    minBtn.MouseButton1Click:Connect(function()
+        minimised = not minimised
+        if minimised then
+            cw.Visible = false
+            tw(win, {Size=UDim2.new(0,WIN_W,0,BAR_H)}, 0.2)
+        else
+            tw(win, {Size=UDim2.new(0,WIN_W,0,WIN_H)}, 0.2)
+            task.delay(0.21, function() cw.Visible = true end)
+        end
+    end)
+
+    -- ── Sidebar ────────────────────────────────────────────────────────────
+    local sidebar = frame(cw, {
+        Name             = "Sidebar",
+        BackgroundColor3 = C.sidebar,
+        Size             = UDim2.new(0, SIDE_W, 1, 0),
+    })
+
+    -- Server name header
+    local srvHdr = frame(sidebar, {
+        BackgroundColor3 = C.sidebar,
+        Size             = UDim2.new(1, 0, 0, 40),
+    })
+    divider(srvHdr, 39)
+    local srvLbl = label(srvHdr, {
+        Text       = "  " .. SERVER,
+        Size       = UDim2.new(1, 0, 1, 0),
+        Font       = Enum.Font.GothamBold,
+        TextSize   = 13,
+        TextColor3 = C.text,
+    })
+    self._srvLbl = srvLbl
 
     -- Channel list
-    local chanList =
-        frm(
-        sidebar,
-        {
-            BackgroundColor3 = C.sidebar,
-            Position = UDim2.new(0, 0, 0, 46),
-            Size = UDim2.new(1, 0, 1, -(46 + BOTTOM_H))
-        }
-    )
-    do
-        local cp = Instance.new("UIPadding")
-        cp.PaddingLeft = UDim.new(0, 6)
-        cp.PaddingRight = UDim.new(0, 6)
-        cp.PaddingTop = UDim.new(0, 4)
-        cp.Parent = chanList
-        local fb = Instance.new("TextButton")
-        fb.Size = UDim2.new(1, 0, 0, 28)
-        fb.BackgroundColor3 = C.panel
-        fb.BackgroundTransparency = 0
-        fb.AutoButtonColor = false
-        fb.Font = Enum.Font.Gotham
-        fb.Text = ""
-        fb.Parent = chanList
-        corner(fb, 4)
-        lbl(
-            fb,
-            {
-                Text = "#",
-                Size = UDim2.new(0, 18, 1, 0),
-                Position = UDim2.new(0, 4, 0, 0),
-                TextSize = 16,
-                TextColor3 = C.text
-            }
-        )
-        lbl(
-            fb,
-            {
-                Text = "live-feed",
-                Size = UDim2.new(1, -26, 1, 0),
-                Position = UDim2.new(0, 24, 0, 0),
-                TextSize = 13,
-                TextColor3 = C.text
-            }
-        )
-    end
+    local chanList = frame(sidebar, {
+        BackgroundColor3 = C.sidebar,
+        Position         = UDim2.new(0, 0, 0, 46),
+        Size             = UDim2.new(1, 0, 1, -(46+BOT_H)),
+    })
+    local clPad = Instance.new("UIPadding")
+    clPad.PaddingLeft  = UDim.new(0, 6)
+    clPad.PaddingRight = UDim.new(0, 6)
+    clPad.PaddingTop   = UDim.new(0, 4)
+    clPad.Parent       = chanList
+    local clLayout = Instance.new("UIListLayout")
+    clLayout.Padding   = UDim.new(0, 2)
+    clLayout.Parent    = chanList
 
-    -- ── Bottom bar ────────────────────────────────────────────────────────────
-    local bottomBar =
-        frm(
-        sidebar,
-        {
-            BackgroundColor3 = Color3.fromRGB(28, 29, 32),
-            Position = UDim2.new(0, 0, 1, -BOTTOM_H),
-            Size = UDim2.new(1, 0, 0, BOTTOM_H)
-        }
-    )
+    -- ── Bottom bar ─────────────────────────────────────────────────────────
+    local bot = frame(sidebar, {
+        BackgroundColor3 = Color3.fromRGB(28, 29, 32),
+        Position         = UDim2.new(0, 0, 1, -BOT_H),
+        Size             = UDim2.new(1, 0, 0, BOT_H),
+    })
 
-    local avatarImg = Instance.new("ImageLabel")
-    avatarImg.Size = UDim2.new(0, 32, 0, 32)
-    avatarImg.Position = UDim2.new(0, 8, 0.5, -16)
-    avatarImg.BackgroundColor3 = C.panel
-    avatarImg.BorderSizePixel = 0
-    avatarImg.Image = "rbxthumb://type=AvatarHeadShot&id=" .. LP.UserId .. "&w=100&h=100"
-    avatarImg.Parent = bottomBar
-    corner(avatarImg, 16)
+    local avi = Instance.new("ImageLabel")
+    avi.Size             = UDim2.new(0, 32, 0, 32)
+    avi.Position         = UDim2.new(0, 8, 0.5, -16)
+    avi.BackgroundColor3 = C.panel
+    avi.BorderSizePixel  = 0
+    avi.Image            = "rbxthumb://type=AvatarHeadShot&id="..LP.UserId.."&w=100&h=100"
+    avi.Parent           = bot
+    corner(avi, 16)
 
-    -- These labels are mutated by settings Save
-    local nameLbl =
-        lbl(
-        bottomBar,
-        {
-            Text = LP.DisplayName,
-            Size = UDim2.new(1, -82, 0, 16),
-            Position = UDim2.new(0, 48, 0, 7),
-            TextSize = 12,
-            Font = Enum.Font.GothamBold,
-            TextColor3 = C.text,
-            TextTruncate = Enum.TextTruncate.AtEnd
-        }
-    )
-    local tagLbl =
-        lbl(
-        bottomBar,
-        {
-            Text = "@" .. LP.Name .. "  •  OG Tracker",
-            Size = UDim2.new(1, -82, 0, 14),
-            Position = UDim2.new(0, 48, 0, 27),
-            TextSize = 10,
-            Font = Enum.Font.Gotham,
-            TextColor3 = C.muted,
-            TextTruncate = Enum.TextTruncate.AtEnd
-        }
-    )
+    local botName = label(bot, {
+        Text         = UNAME,
+        Size         = UDim2.new(1, -82, 0, 16),
+        Position     = UDim2.new(0, 48, 0, 7),
+        TextSize     = 12,
+        Font         = Enum.Font.GothamBold,
+        TextColor3   = C.text,
+        TextTruncate = Enum.TextTruncate.AtEnd,
+    })
+    local botTag = label(bot, {
+        Text         = UTAG,
+        Size         = UDim2.new(1, -82, 0, 14),
+        Position     = UDim2.new(0, 48, 0, 27),
+        TextSize     = 10,
+        Font         = Enum.Font.Gotham,
+        TextColor3   = C.muted,
+        TextTruncate = Enum.TextTruncate.AtEnd,
+    })
+    self._botName = botName
+    self._botTag  = botTag
 
-    -- Gear button
-    local gearBtn = Instance.new("TextButton")
-    gearBtn.Size = UDim2.new(0, 26, 0, 26)
-    gearBtn.Position = UDim2.new(1, -32, 0.5, -13)
+    local gearBtn, gearIco = imgBtn(bot, {
+        Size     = UDim2.new(0, 26, 0, 26),
+        Position = UDim2.new(1, -32, 0.5, -13),
+        Image    = "rbxassetid://6031280882",
+        IconSize = UDim2.new(0, 18, 0, 18),
+        Color    = C.muted,
+    })
+    corner(gearBtn, 5)
     gearBtn.BackgroundColor3 = C.panel
     gearBtn.BackgroundTransparency = 1
-    gearBtn.AutoButtonColor = false
-    gearBtn.Text = ""
-    gearBtn.Parent = bottomBar
-    corner(gearBtn, 5)
-    local gearIco = Instance.new("ImageLabel")
-    gearIco.Size = UDim2.new(0, 18, 0, 18)
-    gearIco.Position = UDim2.new(0.5, -9, 0.5, -9)
-    gearIco.BackgroundTransparency = 1
-    gearIco.Image = "rbxassetid://6031280882"
-    gearIco.ImageColor3 = C.muted
-    gearIco.Parent = gearBtn
-    gearBtn.MouseEnter:Connect(
-        function()
-            tw(gearIco, {ImageColor3 = C.text}, 0.15)
-            tw(gearBtn, {BackgroundTransparency = 0}, 0.15)
-        end
-    )
-    gearBtn.MouseLeave:Connect(
-        function()
-            tw(gearIco, {ImageColor3 = C.muted}, 0.15)
-            tw(gearBtn, {BackgroundTransparency = 1}, 0.15)
-        end
-    )
+    gearBtn.MouseEnter:Connect(function() tw(gearIco,{ImageColor3=C.text},0.15); tw(gearBtn,{BackgroundTransparency=0},0.15) end)
+    gearBtn.MouseLeave:Connect(function() tw(gearIco,{ImageColor3=C.muted},0.15); tw(gearBtn,{BackgroundTransparency=1},0.15) end)
 
-    -- ── Content area ──────────────────────────────────────────────────────────
-    local contentArea =
-        frm(
-        contentWrap,
-        {
-            Name = "ContentArea",
-            BackgroundColor3 = C.bg,
-            Position = UDim2.new(0, SIDEBAR_W, 0, 0),
-            Size = UDim2.new(1, -SIDEBAR_W, 1, 0)
-        }
-    )
+    -- ── Content area ───────────────────────────────────────────────────────
+    local ca = frame(cw, {
+        Name             = "ContentArea",
+        BackgroundColor3 = C.bg,
+        Position         = UDim2.new(0, SIDE_W, 0, 0),
+        Size             = UDim2.new(1, -SIDE_W, 1, 0),
+    })
 
-    local chanHeader = frm(contentArea, {BackgroundColor3 = C.bg, Size = UDim2.new(1, 0, 0, 44)})
-    divLine(chanHeader, 43)
-    lbl(
-        chanHeader,
-        {
-            Text = "#",
-            Size = UDim2.new(0, 20, 1, 0),
-            Position = UDim2.new(0, 14, 0, 0),
-            TextSize = 22,
-            TextColor3 = C.muted
-        }
-    )
-    local chanTitleLbl =
-        lbl(
-        chanHeader,
-        {
-            Text = "live-feed",
-            Size = UDim2.new(1, -50, 1, 0),
-            Position = UDim2.new(0, 36, 0, 0),
-            TextSize = 15,
-            Font = Enum.Font.GothamBold,
-            TextColor3 = C.text
-        }
-    )
+    -- Channel header
+    local chanHdr = frame(ca, {
+        BackgroundColor3 = C.bg,
+        Size             = UDim2.new(1, 0, 0, 44),
+    })
+    divider(chanHdr, 43)
+    label(chanHdr, {
+        Text       = "#",
+        Size       = UDim2.new(0, 20, 1, 0),
+        Position   = UDim2.new(0, 14, 0, 0),
+        TextSize   = 22,
+        TextColor3 = C.muted,
+    })
+    local chanHdrTitle = label(chanHdr, {
+        Text       = DEFAULT_CH,
+        Size       = UDim2.new(1, -50, 1, 0),
+        Position   = UDim2.new(0, 36, 0, 0),
+        TextSize   = 15,
+        Font       = Enum.Font.GothamBold,
+        TextColor3 = C.text,
+    })
+    self._chanHdrTitle = chanHdrTitle
 
-    local feed = Instance.new("ScrollingFrame")
-    feed.Name = "Feed"
-    feed.Size = UDim2.new(1, 0, 1, -44)
-    feed.Position = UDim2.new(0, 0, 0, 44)
-    feed.BackgroundTransparency = 1
-    feed.BorderSizePixel = 0
-    feed.ScrollBarThickness = 4
-    feed.ScrollBarImageColor3 = C.divider
-    feed.ScrollBarImageTransparency = 0.4
-    feed.CanvasSize = UDim2.new(0, 0, 0, 0)
-    feed.AutomaticCanvasSize = Enum.AutomaticSize.Y
-    feed.Parent = contentArea
-    local feedLayout = Instance.new("UIListLayout")
-    feedLayout.Padding = UDim.new(0, 4)
-    feedLayout.Parent = feed
-    local fp = Instance.new("UIPadding")
-    fp.PaddingLeft = UDim.new(0, 12)
-    fp.PaddingRight = UDim.new(0, 12)
-    fp.PaddingTop = UDim.new(0, 8)
-    fp.PaddingBottom = UDim.new(0, 8)
-    fp.Parent = feed
-    self._feed = feed
-    self._feedLayout = feedLayout
+    -- ── Build channels ─────────────────────────────────────────────────────
+    -- Each channel = { btn, feed, feedLayout }
+    local channelData  = {}
+    local activeChanId = DEFAULT_CH
 
-    -- ── Settings panel (overlays content area) ────────────────────────────────
-    local settingsPanel =
-        frm(
-        contentWrap,
-        {
-            Name = "SettingsPanel",
-            BackgroundColor3 = C.bg,
-            Position = UDim2.new(0, SIDEBAR_W, 0, 0),
-            Size = UDim2.new(1, -SIDEBAR_W, 1, 0),
-            Visible = false,
-            ZIndex = 10
-        }
-    )
-
-    -- Settings header
-    local seth = frm(settingsPanel, {BackgroundColor3 = C.bg, Size = UDim2.new(1, 0, 0, 44), ZIndex = 10})
-    divLine(seth, 43)
-    lbl(
-        seth,
-        {
-            Text = "#",
-            Size = UDim2.new(0, 20, 1, 0),
-            Position = UDim2.new(0, 14, 0, 0),
-            TextSize = 22,
-            TextColor3 = C.muted,
-            ZIndex = 11
-        }
-    )
-    lbl(
-        seth,
-        {
-            Text = "settings",
-            Size = UDim2.new(1, -50, 1, 0),
-            Position = UDim2.new(0, 36, 0, 0),
-            TextSize = 15,
-            Font = Enum.Font.GothamBold,
-            TextColor3 = C.text,
-            ZIndex = 11
-        }
-    )
-
-    local setBody =
-        frm(
-        settingsPanel,
-        {BackgroundColor3 = C.bg, Position = UDim2.new(0, 0, 0, 44), Size = UDim2.new(1, 0, 1, -44), ZIndex = 10}
-    )
-    local sbp = Instance.new("UIPadding")
-    sbp.PaddingLeft = UDim.new(0, 20)
-    sbp.PaddingRight = UDim.new(0, 20)
-    sbp.PaddingTop = UDim.new(0, 16)
-    sbp.Parent = setBody
-
-    -- Section label
-    lbl(
-        setBody,
-        {
-            Text = "PROFILE",
-            Size = UDim2.new(1, 0, 0, 18),
-            Position = UDim2.new(0, 0, 0, 0),
-            TextSize = 10,
-            Font = Enum.Font.GothamBold,
-            TextColor3 = C.muted,
-            ZIndex = 11
-        }
-    )
-
-    -- Preview card
-    local pc =
-        frm(
-        setBody,
-        {
-            BackgroundColor3 = Color3.fromRGB(28, 29, 32),
-            Position = UDim2.new(0, 0, 0, 24),
-            Size = UDim2.new(1, 0, 0, 60),
-            ZIndex = 10
-        }
-    )
-    corner(pc, 8)
-    local pcAvatar = Instance.new("ImageLabel")
-    pcAvatar.Size = UDim2.new(0, 38, 0, 38)
-    pcAvatar.Position = UDim2.new(0, 10, 0.5, -19)
-    pcAvatar.BackgroundColor3 = C.panel
-    pcAvatar.BorderSizePixel = 0
-    pcAvatar.ZIndex = 11
-    pcAvatar.Image = "rbxthumb://type=AvatarHeadShot&id=" .. LP.UserId .. "&w=100&h=100"
-    pcAvatar.Parent = pc
-    corner(pcAvatar, 19)
-    local pcName =
-        lbl(
-        pc,
-        {
-            Text = LP.DisplayName,
-            Size = UDim2.new(1, -70, 0, 18),
-            Position = UDim2.new(0, 58, 0, 10),
-            TextSize = 13,
-            Font = Enum.Font.GothamBold,
-            TextColor3 = C.text,
-            ZIndex = 11
-        }
-    )
-    local pcTag =
-        lbl(
-        pc,
-        {
-            Text = "@" .. LP.Name,
-            Size = UDim2.new(1, -70, 0, 14),
-            Position = UDim2.new(0, 58, 0, 32),
-            TextSize = 11,
-            Font = Enum.Font.Gotham,
-            TextColor3 = C.muted,
-            ZIndex = 11
-        }
-    )
-
-    -- Display name input
-    lbl(
-        setBody,
-        {
-            Text = "DISPLAY NAME",
-            Size = UDim2.new(1, 0, 0, 16),
-            Position = UDim2.new(0, 0, 0, 100),
-            TextSize = 10,
-            Font = Enum.Font.GothamBold,
-            TextColor3 = C.muted,
-            ZIndex = 11
-        }
-    )
-    local nameInput, _ =
-        inputBox(
-        setBody,
-        {
-            Size = UDim2.new(1, 0, 0, 38),
-            Position = UDim2.new(0, 0, 0, 120),
-            Default = LP.DisplayName,
-            Placeholder = "Enter display name..."
-        }
-    )
-    nameInput.Changed:Connect(
-        function()
-            if nameInput.Text ~= "" then
-                pcName.Text = nameInput.Text:sub(1, 20)
-            end
-        end
-    )
-
-    -- Tag input
-    lbl(
-        setBody,
-        {
-            Text = "TAG",
-            Size = UDim2.new(1, 0, 0, 16),
-            Position = UDim2.new(0, 0, 0, 172),
-            TextSize = 10,
-            Font = Enum.Font.GothamBold,
-            TextColor3 = C.muted,
-            ZIndex = 11
-        }
-    )
-    local tagInputBg =
-        frm(
-        setBody,
-        {
-            BackgroundColor3 = Color3.fromRGB(28, 29, 32),
-            Position = UDim2.new(0, 0, 0, 192),
-            Size = UDim2.new(1, 0, 0, 38),
-            ZIndex = 10
-        }
-    )
-    corner(tagInputBg, 5)
-    lbl(
-        tagInputBg,
-        {
-            Text = "#",
-            Size = UDim2.new(0, 16, 1, 0),
-            Position = UDim2.new(0, 8, 0, 0),
-            TextSize = 13,
-            TextColor3 = C.muted,
-            ZIndex = 11
-        }
-    )
-    local tagInput = Instance.new("TextBox")
-    tagInput.Size = UDim2.new(1, -34, 1, 0)
-    tagInput.Position = UDim2.new(0, 24, 0, 0)
-    tagInput.BackgroundTransparency = 1
-    tagInput.Font = Enum.Font.Gotham
-    tagInput.TextSize = 13
-    tagInput.TextColor3 = C.text
-    tagInput.PlaceholderColor3 = C.muted
-    tagInput.PlaceholderText = "0000"
-    tagInput.Text = tostring(math.random(1000, 9999))
-    tagInput.TextXAlignment = Enum.TextXAlignment.Left
-    tagInput.ClearTextOnFocus = false
-    tagInput.ZIndex = 11
-    tagInput.Parent = tagInputBg
-    tagInput.Focused:Connect(
-        function()
-            tw(tagInputBg, {BackgroundColor3 = Color3.fromRGB(50, 52, 80)}, 0.15)
-        end
-    )
-    tagInput.FocusLost:Connect(
-        function()
-            tw(tagInputBg, {BackgroundColor3 = Color3.fromRGB(28, 29, 32)}, 0.15)
-        end
-    )
-    tagInput:GetPropertyChangedSignal("Text"):Connect(
-        function()
-            local clean = tagInput.Text:gsub("%D", ""):sub(1, 4)
-            if clean ~= tagInput.Text then
-                tagInput.Text = clean
-            end
-        end
-    )
-
-    -- Save button
-    local saveBtn = Instance.new("TextButton")
-    saveBtn.Size = UDim2.new(1, 0, 0, 36)
-    saveBtn.Position = UDim2.new(0, 0, 0, 244)
-    saveBtn.BackgroundColor3 = C.accent
-    saveBtn.BorderSizePixel = 0
-    saveBtn.AutoButtonColor = false
-    saveBtn.Font = Enum.Font.GothamBold
-    saveBtn.TextSize = 13
-    saveBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    saveBtn.Text = "Save Changes"
-    saveBtn.ZIndex = 11
-    saveBtn.Parent = setBody
-    corner(saveBtn, 6)
-    saveBtn.MouseEnter:Connect(
-        function()
-            tw(saveBtn, {BackgroundColor3 = Color3.fromRGB(71, 82, 196)}, 0.15)
-        end
-    )
-    saveBtn.MouseLeave:Connect(
-        function()
-            tw(saveBtn, {BackgroundColor3 = C.accent}, 0.15)
-        end
-    )
-    saveBtn.MouseButton1Click:Connect(
-        function()
-            local newName = nameInput.Text ~= "" and nameInput.Text:sub(1, 20) or LP.DisplayName
-            local newTag = tagInput.Text ~= "" and tagInput.Text or LP.Name
-            -- Update bottom bar
-            nameLbl.Text = newName
-            tagLbl.Text = "@" .. newTag
-            -- Flash green
-            tw(saveBtn, {BackgroundColor3 = C.green}, 0.1)
-            task.delay(
-                0.9,
-                function()
-                    tw(saveBtn, {BackgroundColor3 = C.accent}, 0.3)
-                end
-            )
-        end
-    )
-
-    -- ── Gear toggle ───────────────────────────────────────────────────────────
-    local settingsOpen = false
-    gearBtn.MouseButton1Click:Connect(
-        function()
-            settingsOpen = not settingsOpen
-            if settingsOpen then
-                settingsPanel.Visible = true
-                chanTitleLbl.Text = "live-feed" -- reset header when returning
-                tw(gearIco, {ImageColor3 = C.accent}, 0.15)
+    local function switchChannel(id)
+        activeChanId = id
+        for cid, cd in pairs(channelData) do
+            cd.feed.Visible = (cid == id)
+            -- button style
+            if cid == id then
+                cd.btn.BackgroundColor3       = C.panel
+                cd.btn.BackgroundTransparency = 0
+                cd.btnLbl.TextColor3          = C.text
             else
-                settingsPanel.Visible = false
-                tw(gearIco, {ImageColor3 = C.muted}, 0.15)
+                cd.btn.BackgroundColor3       = C.sidebar
+                cd.btn.BackgroundTransparency = 1
+                cd.btnLbl.TextColor3          = C.muted
             end
         end
-    )
+        -- update header
+        for _, ch in ipairs(CHANNELS) do
+            if ch.id == id then
+                chanHdrTitle.Text = ch.label
+                break
+            end
+        end
+    end
+
+    for _, ch in ipairs(CHANNELS) do
+        -- Sidebar button
+        local btn = Instance.new("TextButton")
+        btn.Size               = UDim2.new(1, 0, 0, 28)
+        btn.BackgroundColor3   = C.sidebar
+        btn.BackgroundTransparency = 1
+        btn.AutoButtonColor    = false
+        btn.Font               = Enum.Font.Gotham
+        btn.Text               = ""
+        btn.Parent             = chanList
+        corner(btn, 4)
+
+        label(btn, {
+            Text       = "#",
+            Size       = UDim2.new(0, 18, 1, 0),
+            Position   = UDim2.new(0, 4, 0, 0),
+            TextSize   = 16,
+            TextColor3 = C.muted,
+        })
+        local btnLbl = label(btn, {
+            Text       = ch.label,
+            Size       = UDim2.new(1, -26, 1, 0),
+            Position   = UDim2.new(0, 24, 0, 0),
+            TextSize   = 13,
+            TextColor3 = C.muted,
+        })
+
+        btn.MouseEnter:Connect(function()
+            if activeChanId ~= ch.id then
+                btn.BackgroundTransparency = 0.7
+                btnLbl.TextColor3 = C.text
+            end
+        end)
+        btn.MouseLeave:Connect(function()
+            if activeChanId ~= ch.id then
+                btn.BackgroundTransparency = 1
+                btnLbl.TextColor3 = C.muted
+            end
+        end)
+
+        -- Feed (ScrollingFrame)
+        local feed = Instance.new("ScrollingFrame")
+        feed.Name                    = "Feed_" .. ch.id
+        feed.Size                    = UDim2.new(1, 0, 1, -44)
+        feed.Position                = UDim2.new(0, 0, 0, 44)
+        feed.BackgroundTransparency  = 1
+        feed.BorderSizePixel         = 0
+        feed.ScrollBarThickness      = 4
+        feed.ScrollBarImageColor3    = C.divider
+        feed.ScrollBarImageTransparency = 0.4
+        feed.CanvasSize              = UDim2.new(0, 0, 0, 0)
+        feed.AutomaticCanvasSize     = Enum.AutomaticSize.Y
+        feed.Visible                 = false
+        feed.Parent                  = ca
+
+        local fl = Instance.new("UIListLayout")
+        fl.Padding = UDim.new(0, 4)
+        fl.Parent  = feed
+        local fp = Instance.new("UIPadding")
+        fp.PaddingLeft   = UDim.new(0, 12)
+        fp.PaddingRight  = UDim.new(0, 12)
+        fp.PaddingTop    = UDim.new(0, 8)
+        fp.PaddingBottom = UDim.new(0, 8)
+        fp.Parent        = feed
+
+        channelData[ch.id] = { btn=btn, btnLbl=btnLbl, feed=feed, feedLayout=fl }
+
+        local capId = ch.id
+        btn.MouseButton1Click:Connect(function() switchChannel(capId) end)
+    end
+
+    switchChannel(DEFAULT_CH)
+    self._channelData  = channelData
+    self._activeChanId = function() return activeChanId end
+
+    -- Expose first (default) channel feed for backwards compat
+    self._feed       = channelData[DEFAULT_CH].feed
+    self._feedLayout = channelData[DEFAULT_CH].feedLayout
+
+    -- ── Settings panel ─────────────────────────────────────────────────────
+    local sp = frame(cw, {
+        Name             = "SettingsPanel",
+        BackgroundColor3 = C.bg,
+        Position         = UDim2.new(0, SIDE_W, 0, 0),
+        Size             = UDim2.new(1, -SIDE_W, 1, 0),
+        Visible          = false,
+        ZIndex           = 10,
+    })
+
+    local spHdr = frame(sp, {BackgroundColor3=C.bg, Size=UDim2.new(1,0,0,44), ZIndex=10})
+    divider(spHdr, 43)
+    label(spHdr, {Text="#",Size=UDim2.new(0,20,1,0),Position=UDim2.new(0,14,0,0),TextSize=22,TextColor3=C.muted,ZIndex=11})
+    label(spHdr, {Text="settings",Size=UDim2.new(1,-50,1,0),Position=UDim2.new(0,36,0,0),TextSize=15,Font=Enum.Font.GothamBold,TextColor3=C.text,ZIndex=11})
+
+    local spBody = frame(sp, {BackgroundColor3=C.bg,Position=UDim2.new(0,0,0,44),Size=UDim2.new(1,0,1,-44),ZIndex=10})
+    local spPad = Instance.new("UIPadding")
+    spPad.PaddingLeft=UDim.new(0,20); spPad.PaddingRight=UDim.new(0,20); spPad.PaddingTop=UDim.new(0,16)
+    spPad.Parent = spBody
+
+    -- Section: PROFILE
+    label(spBody,{Text="PROFILE",Size=UDim2.new(1,0,0,16),Position=UDim2.new(0,0,0,0),
+        TextSize=10,Font=Enum.Font.GothamBold,TextColor3=C.muted,ZIndex=11})
+
+    local prevCard = frame(spBody,{BackgroundColor3=Color3.fromRGB(28,29,32),
+        Position=UDim2.new(0,0,0,22),Size=UDim2.new(1,0,0,60),ZIndex=10})
+    corner(prevCard,8)
+    local prevAvi = Instance.new("ImageLabel")
+    prevAvi.Size=UDim2.new(0,38,0,38); prevAvi.Position=UDim2.new(0,10,0.5,-19)
+    prevAvi.BackgroundColor3=C.panel; prevAvi.BorderSizePixel=0; prevAvi.ZIndex=11
+    prevAvi.Image="rbxthumb://type=AvatarHeadShot&id="..LP.UserId.."&w=100&h=100"
+    prevAvi.Parent=prevCard; corner(prevAvi,19)
+    local prevName = label(prevCard,{Text=UNAME,Size=UDim2.new(1,-70,0,18),Position=UDim2.new(0,58,0,10),
+        TextSize=13,Font=Enum.Font.GothamBold,TextColor3=C.text,ZIndex=11})
+    local prevTag  = label(prevCard,{Text=UTAG,Size=UDim2.new(1,-70,0,14),Position=UDim2.new(0,58,0,32),
+        TextSize=11,Font=Enum.Font.Gotham,TextColor3=C.muted,ZIndex=11})
+
+    label(spBody,{Text="DISPLAY NAME",Size=UDim2.new(1,0,0,16),Position=UDim2.new(0,0,0,96),
+        TextSize=10,Font=Enum.Font.GothamBold,TextColor3=C.muted,ZIndex=11})
+    local nameIn,_ = styledInput(spBody,{Size=UDim2.new(1,0,0,36),Position=UDim2.new(0,0,0,116),
+        Default=UNAME,Placeholder="Display name...",ZIndex=10})
+    nameIn:GetPropertyChangedSignal("Text"):Connect(function()
+        if nameIn.Text~="" then prevName.Text=nameIn.Text:sub(1,24) end
+    end)
+
+    label(spBody,{Text="TAG",Size=UDim2.new(1,0,0,16),Position=UDim2.new(0,0,0,164),
+        TextSize=10,Font=Enum.Font.GothamBold,TextColor3=C.muted,ZIndex=11})
+    local tagBg=frame(spBody,{BackgroundColor3=Color3.fromRGB(28,29,32),
+        Position=UDim2.new(0,0,0,184),Size=UDim2.new(1,0,0,36),ZIndex=10})
+    corner(tagBg,5)
+    label(tagBg,{Text="#",Size=UDim2.new(0,16,1,0),Position=UDim2.new(0,8,0,0),TextSize=13,TextColor3=C.muted,ZIndex=11})
+    local tagIn = Instance.new("TextBox")
+    tagIn.Size=UDim2.new(1,-34,1,0); tagIn.Position=UDim2.new(0,24,0,0)
+    tagIn.BackgroundTransparency=1; tagIn.Font=Enum.Font.Gotham; tagIn.TextSize=13
+    tagIn.TextColor3=C.text; tagIn.PlaceholderColor3=C.muted; tagIn.PlaceholderText="0000"
+    tagIn.Text=tostring(math.random(1000,9999)); tagIn.TextXAlignment=Enum.TextXAlignment.Left
+    tagIn.ClearTextOnFocus=false; tagIn.ZIndex=11; tagIn.Parent=tagBg
+    tagIn.Focused:Connect(function() tw(tagBg,{BackgroundColor3=Color3.fromRGB(50,52,80)},0.15) end)
+    tagIn.FocusLost:Connect(function() tw(tagBg,{BackgroundColor3=Color3.fromRGB(28,29,32)},0.15) end)
+    tagIn:GetPropertyChangedSignal("Text"):Connect(function()
+        local c=tagIn.Text:gsub("%D",""):sub(1,4)
+        if c~=tagIn.Text then tagIn.Text=c end
+        if tagIn.Text~="" then prevTag.Text="#"..tagIn.Text end
+    end)
+
+    -- Section: APPEARANCE
+    label(spBody,{Text="APPEARANCE",Size=UDim2.new(1,0,0,16),Position=UDim2.new(0,0,0,234),
+        TextSize=10,Font=Enum.Font.GothamBold,TextColor3=C.muted,ZIndex=11})
+
+    label(spBody,{Text="WINDOW TITLE",Size=UDim2.new(1,0,0,16),Position=UDim2.new(0,0,0,258),
+        TextSize=10,Font=Enum.Font.GothamBold,TextColor3=C.muted,ZIndex=11})
+    local titleIn,_ = styledInput(spBody,{Size=UDim2.new(1,0,0,36),Position=UDim2.new(0,0,0,278),
+        Default=TITLE,Placeholder="Window title...",ZIndex=10})
+    titleIn:GetPropertyChangedSignal("Text"):Connect(function()
+        if titleIn.Text~="" then titleLbl.Text=titleIn.Text end
+    end)
+
+    label(spBody,{Text="SERVER NAME",Size=UDim2.new(1,0,0,16),Position=UDim2.new(0,0,0,328),
+        TextSize=10,Font=Enum.Font.GothamBold,TextColor3=C.muted,ZIndex=11})
+    local srvIn,_ = styledInput(spBody,{Size=UDim2.new(1,0,0,36),Position=UDim2.new(0,0,0,348),
+        Default=SERVER,Placeholder="Server name...",ZIndex=10})
+    srvIn:GetPropertyChangedSignal("Text"):Connect(function()
+        if srvIn.Text~="" then srvLbl.Text="  "..srvIn.Text end
+    end)
+
+    -- Save
+    local saveBtn = Instance.new("TextButton")
+    saveBtn.Size=UDim2.new(1,0,0,36); saveBtn.Position=UDim2.new(0,0,0,400)
+    saveBtn.BackgroundColor3=C.accent; saveBtn.BorderSizePixel=0
+    saveBtn.AutoButtonColor=false; saveBtn.Font=Enum.Font.GothamBold
+    saveBtn.TextSize=13; saveBtn.TextColor3=Color3.fromRGB(255,255,255)
+    saveBtn.Text="Save Changes"; saveBtn.ZIndex=11; saveBtn.Parent=spBody
+    corner(saveBtn,6)
+    saveBtn.MouseEnter:Connect(function() tw(saveBtn,{BackgroundColor3=Color3.fromRGB(71,82,196)},0.15) end)
+    saveBtn.MouseLeave:Connect(function() tw(saveBtn,{BackgroundColor3=C.accent},0.15) end)
+    saveBtn.MouseButton1Click:Connect(function()
+        local nm  = nameIn.Text~="" and nameIn.Text:sub(1,24) or UNAME
+        local tg  = tagIn.Text~=""  and ("#"..tagIn.Text)     or UTAG
+        local ttl = titleIn.Text~="" and titleIn.Text          or TITLE
+        local srv = srvIn.Text~=""   and srvIn.Text            or SERVER
+        botName.Text   = nm
+        botTag.Text    = tg
+        titleLbl.Text  = ttl
+        srvLbl.Text    = "  "..srv
+        prevName.Text  = nm
+        prevTag.Text   = tg
+        tw(saveBtn,{BackgroundColor3=C.green},0.1)
+        task.delay(0.9, function() tw(saveBtn,{BackgroundColor3=C.accent},0.3) end)
+    end)
+
+    -- Gear toggle
+    local settingsOpen=false
+    gearBtn.MouseButton1Click:Connect(function()
+        settingsOpen=not settingsOpen
+        sp.Visible=settingsOpen
+        tw(gearIco,{ImageColor3=settingsOpen and C.accent or C.muted},0.15)
+    end)
 
     return self
 end
 
+-- ─── Public API ───────────────────────────────────────────────────────────────
+
+-- Get the feed for a specific channel id (or default if nil)
+function UI:GetFeed(channelId)
+    if channelId then
+        local cd = self._channelData[channelId]
+        return cd and cd.feed, cd and cd.feedLayout
+    end
+    return self._feed, self._feedLayout
+end
+
+-- Push canvas to bottom of a feed
+function UI:ScrollToBottom(channelId)
+    local feed = self:GetFeed(channelId)
+    if feed then feed.CanvasPosition = Vector2.new(0, math.huge) end
+end
+
+-- Update timestamps (call from Heartbeat)
 function UI:UpdateTimestamps()
-    for _, row in self._feed:GetChildren() do
-        if row:IsA("Frame") then
-            local sa = row:GetAttribute("SpawnedAt")
-            if sa then
-                local e = math.floor(os.clock() - sa)
-                local t
-                if e < 60 then
-                    t = e .. "s ago"
-                elseif e < 3600 then
-                    local m = math.floor(e / 60)
-                    local s = e % 60
-                    t = s > 0 and (m .. "m " .. s .. "s ago") or (m .. "m ago")
-                else
-                    t = math.floor(e / 3600) .. "h ago"
-                end
-                for _, l in row:GetDescendants() do
-                    if l:IsA("TextLabel") and l.Name == "TimeLabel" then
-                        l.Text = t
+    for _, cd in pairs(self._channelData) do
+        for _, row in cd.feed:GetChildren() do
+            if row:IsA("Frame") then
+                local sa = row:GetAttribute("SpawnedAt")
+                if sa then
+                    local e = math.floor(os.clock()-sa)
+                    local t
+                    if e<60 then t=e.."s ago"
+                    elseif e<3600 then
+                        local m=math.floor(e/60); local s=e%60
+                        t=s>0 and(m.."m "..s.."s ago")or(m.."m ago")
+                    else t=math.floor(e/3600).."h ago" end
+                    for _,l in row:GetDescendants() do
+                        if l:IsA("TextLabel") and l.Name=="TimeLabel" then l.Text=t end
                     end
                 end
             end
