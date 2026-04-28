@@ -16,7 +16,6 @@ local C = {
     red = Color3.fromRGB(240, 71, 71)
 }
 
--- ─── Internal helpers ─────────────────────────────────────────────────────────
 local function tw(obj, props, t)
     TweenService:Create(obj, TweenInfo.new(t or 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), props):Play()
 end
@@ -51,7 +50,11 @@ end
 local function divLine(parent, y)
     return frm(
         parent,
-        {BackgroundColor3 = C.divider, Size = UDim2.new(1, -16, 0, 1), Position = UDim2.new(0, 8, 0, y or 0)}
+        {
+            BackgroundColor3 = C.divider,
+            Size = UDim2.new(1, -16, 0, 1),
+            Position = UDim2.new(0, 8, 0, y or 0)
+        }
     )
 end
 local function imgBtn(parent, props)
@@ -143,24 +146,6 @@ end
 local UI = {}
 UI.__index = UI
 
---[[
-UI.new(config)
-
-config = {
-    title          = "My App",
-    serverName     = "My Server",
-    iconImage      = "rbxassetid://...",   -- optional, default gear icon
-    width          = 700,                  -- optional
-    height         = 420,                  -- optional
-    channels       = {
-        { id = "feed", label = "live-feed" },
-        { id = "logs", label = "logs"      },
-    },
-    defaultChannel = "feed",
-    userName       = "PleaseLucky",        -- optional, defaults to LP.DisplayName
-    userTag        = "@PleaseLucky",       -- optional, defaults to @LP.Name
-}
---]]
 function UI.new(config)
     config = config or {}
     local self = setmetatable({}, UI)
@@ -205,6 +190,7 @@ function UI.new(config)
 
     -- ── Title bar ─────────────────────────────────────────────────────────────
     local bar = frm(win, {Name = "TitleBar", BackgroundColor3 = C.sidebar, Size = UDim2.new(1, 0, 0, BAR_H)})
+
     local titleIco = Instance.new("ImageLabel")
     titleIco.Size = UDim2.new(0, 20, 0, 20)
     titleIco.Position = UDim2.new(0, 10, 0.5, -10)
@@ -212,6 +198,7 @@ function UI.new(config)
     titleIco.Image = ICON
     titleIco.ImageColor3 = C.accent
     titleIco.Parent = bar
+
     local titleLbl =
         lbl(
         bar,
@@ -314,6 +301,7 @@ function UI.new(config)
 
     -- ── Sidebar ───────────────────────────────────────────────────────────────
     local sidebar = frm(cw, {Name = "Sidebar", BackgroundColor3 = C.sidebar, Size = UDim2.new(0, SIDE_W, 1, 0)})
+
     local srvHdr = frm(sidebar, {BackgroundColor3 = C.sidebar, Size = UDim2.new(1, 0, 0, 40)})
     divLine(srvHdr, 39)
     local srvLbl =
@@ -365,6 +353,8 @@ function UI.new(config)
     avi.Image = "rbxthumb://type=AvatarHeadShot&id=" .. LP.UserId .. "&w=100&h=100"
     avi.Parent = bot
     corner(avi, 16)
+
+    -- botName = DisplayName (top row), botTag = @username (bottom row)
     local botName =
         lbl(
         bot,
@@ -394,7 +384,7 @@ function UI.new(config)
     self._botName = botName
     self._botTag = botTag
 
-    -- forward-declared for channel buttons to close settings
+    -- forward-declared so channel buttons can close settings
     local sp, settingsOpen, gearIcoRef
     settingsOpen = false
 
@@ -462,7 +452,7 @@ function UI.new(config)
         }
     )
 
-    -- ── Channel builder ───────────────────────────────────────────────────────
+    -- ── Channels ──────────────────────────────────────────────────────────────
     local channelData = {}
     local activeChanId = DEF_CH
 
@@ -542,6 +532,7 @@ function UI.new(config)
                 end
             end
         )
+
         local feed = Instance.new("ScrollingFrame")
         feed.Name = "Feed_" .. ch.id
         feed.Size = UDim2.new(1, 0, 1, -44)
@@ -564,6 +555,7 @@ function UI.new(config)
         fp.PaddingTop = UDim.new(0, 8)
         fp.PaddingBottom = UDim.new(0, 8)
         fp.Parent = feed
+
         channelData[ch.id] = {btn = btn, btnLbl = btnLbl, feed = feed, feedLayout = fl}
         local capId = ch.id
         btn.MouseButton1Click:Connect(
@@ -591,6 +583,7 @@ function UI.new(config)
             ZIndex = 10
         }
     )
+
     local spHdr = frm(sp, {BackgroundColor3 = C.bg, Size = UDim2.new(1, 0, 0, 44), ZIndex = 10})
     divLine(spHdr, 43)
     lbl(
@@ -616,6 +609,7 @@ function UI.new(config)
             ZIndex = 11
         }
     )
+
     local spBody =
         frm(
         sp,
@@ -626,6 +620,8 @@ function UI.new(config)
     spPad.PaddingRight = UDim.new(0, 20)
     spPad.PaddingTop = UDim.new(0, 16)
     spPad.Parent = spBody
+
+    -- PROFILE section
     lbl(
         spBody,
         {
@@ -638,6 +634,8 @@ function UI.new(config)
             ZIndex = 11
         }
     )
+
+    -- Preview card — mirrors exactly what the bottom bar shows
     local pc =
         frm(
         spBody,
@@ -658,6 +656,7 @@ function UI.new(config)
     pcAvi.Image = "rbxthumb://type=AvatarHeadShot&id=" .. LP.UserId .. "&w=100&h=100"
     pcAvi.Parent = pc
     corner(pcAvi, 19)
+    -- pcName = DisplayName (top row of preview, same as botName)
     local pcName =
         lbl(
         pc,
@@ -671,6 +670,7 @@ function UI.new(config)
             ZIndex = 11
         }
     )
+    -- pcTag = @username (bottom row of preview, same as botTag)
     local pcTag =
         lbl(
         pc,
@@ -684,6 +684,8 @@ function UI.new(config)
             ZIndex = 11
         }
     )
+
+    -- DISPLAY NAME input
     lbl(
         spBody,
         {
@@ -709,16 +711,17 @@ function UI.new(config)
     )
     nameIn:GetPropertyChangedSignal("Text"):Connect(
         function()
-            if nameIn.Text ~= "" then
-                pcName.Text = nameIn.Text:sub(1, 24)
-                botName.Text = nameIn.Text:sub(1, 24)
-            end
+            local v = nameIn.Text ~= "" and nameIn.Text:sub(1, 24) or UNAME
+            pcName.Text = v -- preview card top row
+            botName.Text = v -- bottom bar top row
         end
     )
+
+    -- USERNAME input (shows @username in bottom bar)
     lbl(
         spBody,
         {
-            Text = "TAG",
+            Text = "USERNAME",
             Size = UDim2.new(1, 0, 0, 16),
             Position = UDim2.new(0, 0, 0, 164),
             TextSize = 10,
@@ -727,65 +730,27 @@ function UI.new(config)
             ZIndex = 11
         }
     )
-    local tagBg =
-        frm(
+    local userIn, _ =
+        styledInput(
         spBody,
         {
-            BackgroundColor3 = Color3.fromRGB(28, 29, 32),
-            Position = UDim2.new(0, 0, 0, 184),
             Size = UDim2.new(1, 0, 0, 36),
+            Position = UDim2.new(0, 0, 0, 184),
+            Default = LP.Name,
+            Placeholder = "Username...",
             ZIndex = 10
         }
     )
-    corner(tagBg, 5)
-    lbl(
-        tagBg,
-        {
-            Text = "#",
-            Size = UDim2.new(0, 16, 1, 0),
-            Position = UDim2.new(0, 8, 0, 0),
-            TextSize = 13,
-            TextColor3 = C.muted,
-            ZIndex = 11
-        }
-    )
-    local tagIn = Instance.new("TextBox")
-    tagIn.Size = UDim2.new(1, -34, 1, 0)
-    tagIn.Position = UDim2.new(0, 24, 0, 0)
-    tagIn.BackgroundTransparency = 1
-    tagIn.Font = Enum.Font.Gotham
-    tagIn.TextSize = 13
-    tagIn.TextColor3 = C.text
-    tagIn.PlaceholderColor3 = C.muted
-    tagIn.PlaceholderText = "0000"
-    tagIn.Text = tostring(math.random(1000, 9999))
-    tagIn.TextXAlignment = Enum.TextXAlignment.Left
-    tagIn.ClearTextOnFocus = false
-    tagIn.TextEditable = true
-    tagIn.ZIndex = 11
-    tagIn.Parent = tagBg
-    tagIn.Focused:Connect(
+    userIn:GetPropertyChangedSignal("Text"):Connect(
         function()
-            tw(tagBg, {BackgroundColor3 = Color3.fromRGB(50, 52, 80)}, 0.15)
-        end
-    )
-    tagIn.FocusLost:Connect(
-        function()
-            tw(tagBg, {BackgroundColor3 = Color3.fromRGB(28, 29, 32)}, 0.15)
-        end
-    )
-    tagIn:GetPropertyChangedSignal("Text"):Connect(
-        function()
-            local c = tagIn.Text:gsub("%D", ""):sub(1, 4)
-            if c ~= tagIn.Text then
-                tagIn.Text = c
-            end
-            if tagIn.Text ~= "" then
-                pcTag.Text = "#" .. tagIn.Text
-                botTag.Text = "#" .. tagIn.Text
+            if userIn.Text ~= "" then
+                pcTag.Text = "@" .. userIn.Text -- preview card bottom row
+                botTag.Text = "@" .. userIn.Text -- bottom bar bottom row
             end
         end
     )
+
+    -- APPEARANCE section
     lbl(
         spBody,
         {
@@ -798,6 +763,7 @@ function UI.new(config)
             ZIndex = 11
         }
     )
+
     lbl(
         spBody,
         {
@@ -828,6 +794,7 @@ function UI.new(config)
             end
         end
     )
+
     lbl(
         spBody,
         {
@@ -858,6 +825,8 @@ function UI.new(config)
             end
         end
     )
+
+    -- Save button
     local saveBtn = Instance.new("TextButton")
     saveBtn.Size = UDim2.new(1, 0, 0, 36)
     saveBtn.Position = UDim2.new(0, 0, 0, 400)
@@ -884,15 +853,18 @@ function UI.new(config)
     saveBtn.MouseButton1Click:Connect(
         function()
             local nm = nameIn.Text ~= "" and nameIn.Text:sub(1, 24) or UNAME
-            local tg = tagIn.Text ~= "" and ("#" .. tagIn.Text) or UTAG
+            local usr = userIn.Text ~= "" and ("@" .. userIn.Text) or UTAG
             local ttl = titleIn.Text ~= "" and titleIn.Text or TITLE
             local srv = srvIn.Text ~= "" and srvIn.Text or SERVER
+            -- update bottom bar
             botName.Text = nm
-            botTag.Text = tg
+            botTag.Text = usr
+            -- update preview card
+            pcName.Text = nm
+            pcTag.Text = usr
+            -- update window chrome
             titleLbl.Text = ttl
             srvLbl.Text = "  " .. srv
-            pcName.Text = nm
-            pcTag.Text = tg
             tw(saveBtn, {BackgroundColor3 = C.green}, 0.1)
             task.delay(
                 0.9,
@@ -902,6 +874,8 @@ function UI.new(config)
             )
         end
     )
+
+    -- Gear toggle
     gearBtn.MouseButton1Click:Connect(
         function()
             settingsOpen = not settingsOpen
@@ -920,27 +894,20 @@ end
 --[[
 UI:AddEntry(config)
 
-Adds a card to the specified channel feed.
-
 config = {
-    channelId   = "feed",          -- which channel to post in (default = first)
-    accentColor = Color3,          -- left bar colour (default = grey)
-    cardHeight  = 138,             -- optional override
-    fields      = {                -- ordered list of label/value rows
+    channelId   = "feed",
+    accentColor = Color3,
+    cardHeight  = 138,
+    fields = {
         { label = "USERNAME", value = "PlayerOne" },
         { label = "BRAINROT", value = "Meowl"     },
-        { label = "MUTATION",  value = "Gold", color = Color3.fromRGB(255,222,89) },
+        { label = "MUTATION", value = "Gold", color = Color3.fromRGB(255,222,89) },
     },
-    button = {                     -- optional action button
-        text    = "Send Trade",
-        onClick = function() end,
-    },
-    onViewport = function(vp, wm)  -- optional: called with ViewportFrame + WorldModel
-        -- you build the 3D model here
+    button = { text = "Send Trade", onClick = function() end },
+    onViewport = function(vp, wm, cam)
+        -- populate the 3D viewport here
     end,
 }
-
-Returns the card Frame so you can modify it later if needed.
 --]]
 function UI:AddEntry(config)
     config = config or {}
@@ -956,14 +923,11 @@ function UI:AddEntry(config)
     local hasVP = config.onViewport ~= nil
     local VP_SIZE = 88
     local TEXT_X = 14
-    -- if there's a viewport, limit text width so it doesn't overlap
     local TEXT_W = hasVP and (feed.AbsoluteSize.X - TEXT_X - VP_SIZE - 20) or (feed.AbsoluteSize.X - TEXT_X - 20)
-    -- fall back if AbsoluteSize isn't ready yet
     if TEXT_W < 60 then
         TEXT_W = hasVP and 295 or 380
     end
 
-    -- ── Card ──────────────────────────────────────────────────────────────────
     local card = Instance.new("Frame")
     card.Name = "UICard"
     card.Size = UDim2.new(1, 0, 0, cardH)
@@ -972,7 +936,6 @@ function UI:AddEntry(config)
     card.Parent = feed
     corner(card, 6)
 
-    -- Left accent bar
     local accent = Instance.new("Frame")
     accent.Size = UDim2.new(0, 4, 1, 0)
     accent.BackgroundColor3 = accentClr
@@ -986,40 +949,35 @@ function UI:AddEntry(config)
     accentFill.BorderSizePixel = 0
     accentFill.Parent = card
 
-    -- ── Fields ────────────────────────────────────────────────────────────────
     for i, field in ipairs(fields) do
         local yPos = 10 + (i - 1) * 32
-
-        local fieldLbl = Instance.new("TextLabel")
-        fieldLbl.Size = UDim2.new(0, TEXT_W, 0, 14)
-        fieldLbl.Position = UDim2.new(0, TEXT_X, 0, yPos)
-        fieldLbl.BackgroundTransparency = 1
-        fieldLbl.Font = Enum.Font.GothamBold
-        fieldLbl.TextSize = 10
-        fieldLbl.TextColor3 = Color3.fromRGB(148, 155, 164)
-        fieldLbl.TextXAlignment = Enum.TextXAlignment.Left
-        fieldLbl.Text = (field.label or ""):upper()
-        fieldLbl.Parent = card
-
-        local fieldVal = Instance.new("TextLabel")
-        fieldVal.Size = UDim2.new(0, TEXT_W, 0, 16)
-        fieldVal.Position = UDim2.new(0, TEXT_X, 0, yPos + 14)
-        fieldVal.BackgroundTransparency = 1
-        fieldVal.Font = Enum.Font.GothamSemibold
-        fieldVal.TextSize = 13
-        fieldVal.TextColor3 = field.color or Color3.fromRGB(220, 221, 222)
-        fieldVal.TextXAlignment = Enum.TextXAlignment.Left
-        fieldVal.TextTruncate = Enum.TextTruncate.AtEnd
-        fieldVal.Text = tostring(field.value or "")
-        fieldVal.Parent = card
+        local fl = Instance.new("TextLabel")
+        fl.Size = UDim2.new(0, TEXT_W, 0, 14)
+        fl.Position = UDim2.new(0, TEXT_X, 0, yPos)
+        fl.BackgroundTransparency = 1
+        fl.Font = Enum.Font.GothamBold
+        fl.TextSize = 10
+        fl.TextColor3 = Color3.fromRGB(148, 155, 164)
+        fl.TextXAlignment = Enum.TextXAlignment.Left
+        fl.Text = (field.label or ""):upper()
+        fl.Parent = card
+        local fv = Instance.new("TextLabel")
+        fv.Size = UDim2.new(0, TEXT_W, 0, 16)
+        fv.Position = UDim2.new(0, TEXT_X, 0, yPos + 14)
+        fv.BackgroundTransparency = 1
+        fv.Font = Enum.Font.GothamSemibold
+        fv.TextSize = 13
+        fv.TextColor3 = field.color or Color3.fromRGB(220, 221, 222)
+        fv.TextXAlignment = Enum.TextXAlignment.Left
+        fv.TextTruncate = Enum.TextTruncate.AtEnd
+        fv.Text = tostring(field.value or "")
+        fv.Parent = card
     end
 
-    -- ── Optional button ───────────────────────────────────────────────────────
     if config.button then
-        local btnY = cardH - 30
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(0, TEXT_W, 0, 22)
-        btn.Position = UDim2.new(0, TEXT_X, 0, btnY)
+        btn.Position = UDim2.new(0, TEXT_X, 0, cardH - 30)
         btn.BackgroundColor3 = Color3.fromRGB(60, 63, 70)
         btn.BorderSizePixel = 0
         btn.AutoButtonColor = false
@@ -1044,7 +1002,6 @@ function UI:AddEntry(config)
         end
     end
 
-    -- ── Optional ViewportFrame ────────────────────────────────────────────────
     if config.onViewport then
         local vp = Instance.new("ViewportFrame")
         vp.Size = UDim2.new(0, VP_SIZE, 0, VP_SIZE)
@@ -1062,7 +1019,6 @@ function UI:AddEntry(config)
         vp.CurrentCamera = cam
         local wm = Instance.new("WorldModel")
         wm.Parent = vp
-        -- caller populates the model, fits camera, etc.
         config.onViewport(vp, wm, cam)
     end
 
@@ -1070,7 +1026,6 @@ function UI:AddEntry(config)
     return card
 end
 
--- Get a channel's feed frame directly
 function UI:GetFeed(channelId)
     if channelId and self._channelData[channelId] then
         return self._channelData[channelId].feed
@@ -1078,7 +1033,6 @@ function UI:GetFeed(channelId)
     return self._feed
 end
 
--- Update "Xs ago" timestamps (call from Heartbeat)
 function UI:UpdateTimestamps()
     for _, cd in pairs(self._channelData) do
         for _, row in cd.feed:GetChildren() do
